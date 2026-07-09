@@ -73,7 +73,15 @@
       button {
         font-family: inherit;
       }
+      #mediaPickerBtn {
+          width: 54px;
+          height: 40px;
+      }
 
+      #mediaPickerBtn img {
+          width: 30px;
+          height: 30px;
+      }
       img,
       video {
         max-width: 100%;
@@ -1249,6 +1257,9 @@
         align-items: center;
         pointer-events: none;
       }
+      #voiceBtn{
+        background:linear-gradient(180deg, #005C4B 0%, #025144 100%);
+      }
 
       @keyframes fadeSlideIn {
         from {
@@ -1348,7 +1359,11 @@
           <div id="chatName" class="name"></div>
           <div id="chatStatusText"></div>
         </div>
-        <button class="btn-ghost btn-icon" id="searchInChatBtn" title="Search in chat">🔍</button>
+        <button class="btn-ghost btn-icon" id="searchInChatBtn" title="Search in chat"><img
+          src="images/attachments/lens.png"
+          class="img-fluid rounded-top"
+          alt="lens"
+        /></button>
         <button class="btn-ghost btn-icon" id="chatMenuBtn" title="More">⋮</button>
       </div>
 
@@ -1367,15 +1382,32 @@
       </div>
 
       <div class="composer" id="composerBar">
-        <button class="btn-ghost btn-icon" id="mediaPickerBtn">😊</button>
-        <button class="btn-ghost btn-icon" id="attachBtn">📎</button>
-        <button class="btn-ghost btn-icon" id="cameraBtn">📷</button>
+        <button class="btn-ghost btn-icon" id="mediaPickerBtn"><img
+          src="images/attachments/emoji.png"
+          class="emojipicker"
+          alt="emojipicker"
+        />
+        </button>
+        <button class="btn-ghost btn-icon" id="attachBtn"><img
+          src="images/attachments/attachment.png"
+          class="img-fluid rounded-top"
+          alt="attachment"
+        /></button>
+        <button class="btn-ghost btn-icon" id="cameraBtn"><img
+          src="images/attachments/camera.png"
+          class="img-fluid rounded-top"
+          alt="camera"
+        /></button>
         <div class="composer-input-wrap">
           <textarea id="messageInput" rows="1" placeholder="Message…"></textarea>
         </div>
         <input type="file" id="fileInput" hidden />
         <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
-        <button class="btn-ghost btn-icon" id="voiceBtn">🎤</button>
+        <button class="btn-ghost btn-icon" id="voiceBtn"><img
+          src="images/attachments/microphone.png"
+          class="img-fluid rounded-top"
+          alt="microphone"
+        /></button>
         <button class="send-btn hidden" id="sendBtn">➤</button>
 
         <div class="voice-rec-ui" id="voiceRecUi">
