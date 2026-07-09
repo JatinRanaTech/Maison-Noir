@@ -4021,28 +4021,61 @@
           document.getElementById("profileAvatarImg").src = dataUrl;
           window.tempAvatar = dataUrl;
         });
-      document
-        .getElementById("saveProfileBtn")
-        .addEventListener("click", async () => {
-          const newUsername = document
-            .getElementById("profileUsername")
-            .value.trim();
-          if (newUsername && newUsername !== profile.username) {
-            await updateDoc(doc(db, "users", user.uid), {
-              username: newUsername,
-            });
-            profile.username = newUsername;
-          }
-          if (window.tempAvatar) {
-            await updateDoc(doc(db, "users", user.uid), {
-              photoURL: window.tempAvatar,
-            });
-            profile.photoURL = window.tempAvatar;
-            window.tempAvatar = null;
-          }
-          showToast("Profile saved");
-          showList();
-        });
+      document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+  const newUsername = document.getElementById("profileUsername").value.trim();
+  const newPhoto = window.tempAvatar; // the uploaded data URL
+
+  // ---- 1. Update your own user document ----
+  const updates = {};
+  if (newUsername && newUsername !== profile.username) {
+    updates.username = newUsername;
+    profile.username = newUsername;
+  }
+  if (newPhoto) {
+    updates.photoURL = newPhoto;
+    profile.photoURL = newPhoto;
+    window.tempAvatar = null;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await updateDoc(doc(db, "users", user.uid), updates);
+  }
+
+  // ---- 2. Update participantInfo in every conversation you’re in ----
+  try {
+    const q = query(
+      collection(db, "conversations"),
+      where("participants", "array-contains", user.uid)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const batch = writeBatch(db);
+      snap.forEach((convDoc) => {
+        const ref = doc(db, "conversations", convDoc.id);
+        const data = {};
+
+        if (newUsername) {
+          data[`participantInfo.${user.uid}.username`] = newUsername;
+        }
+        if (newPhoto) {
+          data[`participantInfo.${user.uid}.photoURL`] = newPhoto;
+        }
+
+        if (Object.keys(data).length > 0) {
+          batch.update(ref, data);
+        }
+      });
+      await batch.commit();
+    }
+  } catch (err) {
+    console.error("Failed to sync profile to conversations:", err);
+    // still show toast – the avatar might not update for others instantly but
+    // the user doc is correct, so it’s not fatal.
+  }
+
+  showToast("Profile saved");
+  showList();
+});
 
       // ========== LOGOUT ==========
       document
