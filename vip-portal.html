@@ -8,6 +8,10 @@
     />
     <title>VIP Portal</title>
     <link rel="icon" type="image/png" href="images/favicon.webp" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/components.css" />
@@ -468,7 +472,6 @@
         display: inline-block;
         border-radius: 12px;
         border: 1px solid var(--line);
-        
       }
 
       .msg-row {
@@ -560,6 +563,7 @@
       }
       .pin-flag {
         font-size: 0.7rem;
+        margin-right: 2px;
       }
 
       .reply-quote {
@@ -1407,6 +1411,10 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
+      .action-item.danger i.bi-trash {
+        color: var(--text);       /* or #fff, or the light colour you prefer */
+  margin-right: 6px;        /* a little spacing from the text */
+}
       .emoji-caret {
         display: inline-block;
         width: 1px;
@@ -1420,6 +1428,26 @@
           opacity: 0;
         }
       }
+      .pin-icon,
+      .pin-flag,
+      .pinned-bar-icon i {
+        color: var(--gold);
+        font-size: 1em; /* adjust size to match text */
+        vertical-align: middle;
+      }
+      .msg-status-icon {
+        font-size: 0.75rem;
+        vertical-align: middle;
+        color: var(--text-muted);    /* sent = gray */
+      }
+      .msg-status-icon.read {
+        color: #4fc3f7;              /* read = blue (same as the original .tick.read) */
+      }
+      .action-item i {
+  margin-right: 8px;
+  font-size: 1.1rem;
+  vertical-align: middle;
+}
     </style>
   </head>
   <body>
@@ -1511,7 +1539,7 @@
       </div>
 
       <div id="pinnedBar" class="pinned-bar hidden">
-        <div class="pinned-bar-icon">📌</div>
+        <div class="pinned-bar-icon"><i class="bi bi-pin"></i></div>
         <div class="pinned-bar-text" id="pinnedBarText"></div>
         <div class="pinned-bar-count" id="pinnedBarCount"></div>
       </div>
@@ -1734,39 +1762,51 @@
     <!-- ============ Message action sheet ============ -->
     <div class="sheet-scrim" id="actionScrim"></div>
     <div class="action-sheet" id="actionSheet">
-      <div class="sheet-handle"></div>
-      <div class="reaction-row" id="reactionRow"></div>
-      <button class="action-item" data-action="reply">↩️ Reply</button>
-      <button class="action-item" data-action="copy">📋 Copy</button>
-      <button class="action-item" data-action="forward">↪️ Forward</button>
-      <button class="action-item" data-action="pin">📌 Pin</button>
-      <button class="action-item" data-action="star">⭐ Star</button>
-      <button class="action-item" data-action="edit">✏️ Edit</button>
-      <button class="action-item" data-action="info">ℹ️ Message Info</button>
-      <button class="action-item danger" data-action="deleteMe">
-        🗑️ Delete for Me
-      </button>
-      <button class="action-item danger" data-action="deleteEveryone">
-        🗑️ Delete for Everyone
-      </button>
-    </div>
+  <div class="sheet-handle"></div>
+  <div class="reaction-row" id="reactionRow"></div>
+  <button class="action-item" data-action="reply">
+    <i class="bi bi-reply"></i> Reply
+  </button>
+  <button class="action-item" data-action="copy">
+    <i class="bi bi-copy"></i> Copy
+  </button>
+  <button class="action-item" data-action="forward">
+    <i class="bi bi-reply-all"></i> Forward
+  </button>
+  <button class="action-item" data-action="pin">
+    <i class="bi bi-pin"></i> Pin
+  </button>
+  <button class="action-item" data-action="star">
+    <i class="bi bi-star"></i> Star
+  </button>
+  <button class="action-item" data-action="edit">
+    <i class="bi bi-pencil"></i> Edit
+  </button>
+  <button class="action-item" data-action="info">
+    <i class="bi bi-send-fill"></i> Message Info
+  </button>
+  <button class="action-item danger" data-action="deleteMe">
+    <i class="bi bi-trash"></i> Delete for Me
+  </button>
+  <button class="action-item danger" data-action="deleteEveryone">
+    <i class="bi bi-trash"></i> Delete for Everyone
+  </button>
+</div>
 
     <!-- ============ Chat overflow menu ============ -->
     <div class="sheet-scrim" id="chatMenuScrim"></div>
     <div class="action-sheet" id="chatMenuSheet">
       <div class="sheet-handle"></div>
-      <button class="action-item" data-menu="wallpaper">🖼️ Wallpaper</button>
-      <button class="action-item" data-menu="sharedMedia">
-        🗂️ Shared Media
-      </button>
+      <button class="action-item" data-menu="wallpaper"><i class="bi bi-card-image"></i> Wallpaper</button>
+<button class="action-item" data-menu="sharedMedia"><i class="bi bi-folder"></i> Shared Media</button>
       <button class="action-item" data-menu="pinnedList">
-        📌 Pinned Messages
+        <i class="bi bi-pin"></i> Pinned Messages
       </button>
       <button class="action-item" data-menu="starredList">
-        ⭐ Starred Messages
+        <i class="bi bi-star"></i> Starred Messages
       </button>
       <button class="action-item danger" data-menu="deleteChat">
-        🗑️ Delete Conversation
+        <i class="bi bi-trash"></i> Delete Conversation
       </button>
     </div>
 
@@ -1816,16 +1856,30 @@
       </div>
     </div>
 
-        <!-- ============ Edit Message modal ============ -->
+    <!-- ============ Edit Message modal ============ -->
     <div class="modal-scrim" id="editMsgModal">
       <div class="modal-box">
         <div class="modal-head">
-          <strong class="brand" style="font-size: 1rem">MAISON <em>NOIR</em></strong>
+          <strong class="brand" style="font-size: 1rem"
+            >MAISON <em>NOIR</em></strong
+          >
           <button class="btn-ghost btn-icon" id="closeEditMsgModal">✕</button>
         </div>
         <div class="modal-body">
-          <textarea id="editMsgTextarea" class="field" rows="4" style="resize: vertical; width: 100%; margin-bottom: 14px; font-family: inherit;"></textarea>
-          <button class="btn btn-primary btn-block" id="saveEditMsgBtn">Save</button>
+          <textarea
+            id="editMsgTextarea"
+            class="field"
+            rows="4"
+            style="
+              resize: vertical;
+              width: 100%;
+              margin-bottom: 14px;
+              font-family: inherit;
+            "
+          ></textarea>
+          <button class="btn btn-primary btn-block" id="saveEditMsgBtn">
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -2359,7 +2413,7 @@
             const other = otherParticipant(c);
             const unread = c.unread?.[user.uid] || 0;
             const pin = pinnedChats.has(c.id)
-              ? '<span class="pin-icon">📌</span>'
+              ? '<i class="bi bi-pin pin-icon"></i>'
               : "";
             const lastMine = c.lastSenderId === user.uid;
             const tick = lastMine
@@ -2500,16 +2554,20 @@
         chatPage.classList.remove("hidden");
         profilePage.classList.add("hidden");
       }
-        function showProfilePage() {
+      function showProfilePage() {
         listPage.classList.add("hidden");
         chatPage.classList.add("hidden");
         profilePage.classList.remove("hidden");
-        document.getElementById("profileUsername").value = profile.username || "";
-        document.getElementById("profileAvatarImg").src = avatarUrl({ uid: user.uid, photoURL: profile.photoURL });
+        document.getElementById("profileUsername").value =
+          profile.username || "";
+        document.getElementById("profileAvatarImg").src = avatarUrl({
+          uid: user.uid,
+          photoURL: profile.photoURL,
+        });
         history.pushState({ page: "profile" }, "");
       }
 
-        window.addEventListener("popstate", (e) => {
+      window.addEventListener("popstate", (e) => {
         const state = e.state;
         if (!state || state.page !== "chat") {
           document.getElementById("mediaPicker").classList.remove("open");
@@ -2681,7 +2739,7 @@
         return `<div class="msg-text"><span class="msg-text-content">${escapeHtml(m.text || "")}</span>${metaHtml}</div>`;
       }
       let previousRenderedIds = new Set();
-      function renderMessages() {       
+      function renderMessages() {
         const wasAtBottom =
           chatBody.scrollTop + chatBody.clientHeight >=
           chatBody.scrollHeight - 80;
@@ -2703,12 +2761,22 @@
             ? '<span class="edited-tag">edited</span>'
             : "";
           const pinFlag = pinnedIds.has(m.id)
-            ? '<span class="pin-flag">📌</span>'
+            ? '<i class="bi bi-pin pin-flag"></i>'
             : "";
           const starFlag = starredIds.has(m.id)
             ? '<span class="star-flag">⭐</span>'
             : "";
-          const statusTicks = `<span class="msg-status ${readClass}">${mine ? (m.readBy?.length > 1 ? "✓✓" : "✓") : ""}</span>`;
+          let tickIcon = "";
+          if (mine) {
+            // read by more than just the sender → double check (blue)
+            if (m.readBy?.length > 1) {
+              tickIcon = `<i class="bi bi-check2-all msg-status-icon read"></i>`;
+            } else {
+              // sent but not read → single check (gray)
+              tickIcon = `<i class="bi bi-check2 msg-status-icon"></i>`;
+            }
+          }
+          const statusTicks = tickIcon;
           const metaInner = `${pinFlag}${starFlag}${editedTag}<span>${time}</span>${statusTicks}`;
 
           // Text/deleted bubbles: meta floats INSIDE the text (WhatsApp-style)
@@ -2943,7 +3011,7 @@
           let touchStartX = 0,
             touchStartY = 0,
             swiping = false;
-            row.addEventListener(
+          row.addEventListener(
             "touchstart",
             (e) => {
               touchStartX = e.touches[0].clientX;
@@ -3014,42 +3082,49 @@
 
       // ========== ACTION SHEET (message actions) ==========
       function openActionSheet(msgId) {
-        actionMenuMsgId = msgId;
-        const msg = currentMessages.find((m) => m.id === msgId);
-        if (!msg) return;
-        const mine = msg.senderId === user.uid;
-        const isPinned = getPinnedMsgIds(activeConvId).has(msgId);
-        const isStarred = getStarredMsgIds(activeConvId).has(msgId);
-        document
-          .querySelectorAll("#actionSheet .action-item")
-          .forEach((btn) => {
-            const action = btn.dataset.action;
-            if (action === "edit")
-              btn.classList.toggle("hidden", !mine || msg.type !== "text");
-            if (action === "deleteEveryone")
-              btn.classList.toggle("hidden", !mine);
-            if (action === "pin")
-              btn.innerHTML = isPinned ? "📌 Unpin" : "📌 Pin";
-            if (action === "star")
-              btn.innerHTML = isStarred ? "⭐ Unstar" : "⭐ Star";
-          });
-        const row = document.getElementById("reactionRow");
-        row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
-          .map((e) => `<span data-emoji="${e}">${e}</span>`)
-          .join("");
-        row.querySelectorAll("span").forEach((s) => {
-          s.onclick = async () => {
-            await updateDoc(
-              doc(db, "conversations", activeConvId, "messages", msgId),
-              {
-                [`reactions.${s.dataset.emoji}`]: increment(1),
-              },
-            );
-            closeSheet("actionScrim", "actionSheet");
-          };
-        });
-        openSheet("actionScrim", "actionSheet");
-      }
+  actionMenuMsgId = msgId;
+  const msg = currentMessages.find((m) => m.id === msgId);
+  if (!msg) return;
+  const mine = msg.senderId === user.uid;
+  const isPinned = getPinnedMsgIds(activeConvId).has(msgId);
+  const isStarred = getStarredMsgIds(activeConvId).has(msgId);
+
+  document
+    .querySelectorAll("#actionSheet .action-item")
+    .forEach((btn) => {
+      const action = btn.dataset.action;
+      if (action === "edit")
+        btn.classList.toggle("hidden", !mine || msg.type !== "text");
+      if (action === "deleteEveryone")
+        btn.classList.toggle("hidden", !mine);
+      if (action === "pin")
+        btn.innerHTML = isPinned
+          ? '<i class="bi bi-pin"></i> Unpin'
+          : '<i class="bi bi-pin"></i> Pin';
+      if (action === "star")
+        btn.innerHTML = isStarred
+          ? '<i class="bi bi-star"></i> Unstar'
+          : '<i class="bi bi-star"></i> Star';
+    });   // <--- this closing was missing
+
+  const row = document.getElementById("reactionRow");
+  row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
+    .map((e) => `<span data-emoji="${e}">${e}</span>`)
+    .join("");
+  row.querySelectorAll("span").forEach((s) => {
+    s.onclick = async () => {
+      await updateDoc(
+        doc(db, "conversations", activeConvId, "messages", msgId),
+        {
+          [`reactions.${s.dataset.emoji}`]: increment(1),
+        },
+      );
+      closeSheet("actionScrim", "actionSheet");
+    };
+  });
+
+  openSheet("actionScrim", "actionSheet");
+}
       document
         .getElementById("actionScrim")
         .addEventListener("click", () =>
@@ -3109,30 +3184,42 @@
         });
       });
 
-            let editingMsg = null;
+      let editingMsg = null;
       function openEditMessage(msg) {
         editingMsg = msg;
         document.getElementById("editMsgTextarea").value = msg.text || "";
         document.getElementById("editMsgModal").classList.add("open");
-        setTimeout(() => document.getElementById("editMsgTextarea").focus(), 50);
+        setTimeout(
+          () => document.getElementById("editMsgTextarea").focus(),
+          50,
+        );
       }
-      document.getElementById("closeEditMsgModal").addEventListener("click", () => {
-        document.getElementById("editMsgModal").classList.remove("open");
-        editingMsg = null;
-      });
-      document.getElementById("saveEditMsgBtn").addEventListener("click", async () => {
-        const trimmed = document.getElementById("editMsgTextarea").value.trim();
-        document.getElementById("editMsgModal").classList.remove("open");
-        if (!editingMsg || !trimmed || trimmed === editingMsg.text) {
+      document
+        .getElementById("closeEditMsgModal")
+        .addEventListener("click", () => {
+          document.getElementById("editMsgModal").classList.remove("open");
           editingMsg = null;
-          return;
-        }
-        await updateDoc(doc(db, "conversations", activeConvId, "messages", editingMsg.id), {
-          text: trimmed,
-          edited: true,
         });
-        editingMsg = null;
-      });
+      document
+        .getElementById("saveEditMsgBtn")
+        .addEventListener("click", async () => {
+          const trimmed = document
+            .getElementById("editMsgTextarea")
+            .value.trim();
+          document.getElementById("editMsgModal").classList.remove("open");
+          if (!editingMsg || !trimmed || trimmed === editingMsg.text) {
+            editingMsg = null;
+            return;
+          }
+          await updateDoc(
+            doc(db, "conversations", activeConvId, "messages", editingMsg.id),
+            {
+              text: trimmed,
+              edited: true,
+            },
+          );
+          editingMsg = null;
+        });
 
       function openMessageInfo(msg) {
         const body = document.getElementById("msgInfoBody");
@@ -4002,7 +4089,7 @@
           document.getElementById("newChatModal").classList.remove("open"),
         );
 
-      // Initial load      
+      // Initial load
       history.replaceState({ page: "list" }, "");
       renderSkeleton();
     </script>
