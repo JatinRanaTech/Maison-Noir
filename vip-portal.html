@@ -1313,6 +1313,23 @@
           transition-duration: 0.001ms !important;
         }
       }
+      /* WhatsApp-style inline timestamp: floats at the end of the text so the
+        last line wraps around it, instead of it sitting on its own row. */
+      .msg-text-inline-meta {
+        float: right;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.64rem;
+        opacity: 0.75;
+        margin-left: 8px;
+        margin-top: 4px;
+        white-space: nowrap;
+        user-select: none;
+      }
+      .msg-text-inline-meta .msg-status.read {
+        color: #4fc3f7;
+      }
     </style>
   </head>
   <body>
@@ -1912,6 +1929,27 @@
         });
       }
 
+    const presenceCache = new Map(); // otherUid -> raw lastActive value
+
+function updatePresenceUI(otherUid, lastActiveRaw) {
+  const online = isOnline(lastActiveRaw);
+  document.querySelectorAll(`[data-presence="${otherUid}"]`).forEach((dot) => {
+    dot.classList.toggle("online", online);
+  });
+  if (activeConvId && activeOtherUid === otherUid) {
+    const chatDot = document.getElementById("chatStatusDot");
+    if (chatDot) chatDot.classList.toggle("online", online);
+    const statusText = document.getElementById("chatStatusText");
+    if (statusText && !statusText.classList.contains("typing")) {
+      statusText.textContent = online
+        ? "Online"
+        : lastActiveRaw
+          ? "last seen " + relativeTime(lastActiveRaw.toDate ? lastActiveRaw.toDate() : lastActiveRaw)
+          : "Offline";
+    }
+  }
+}
+
       function watchPresence() {
         conversations.forEach((c) => {
           const other = otherParticipant(c);
@@ -1921,25 +1959,16 @@
           const userRef = doc(db, "users", otherUid);
           onSnapshot(userRef, (snap) => {
             if (!snap.exists()) return;
-            const online = isOnline(snap.data().lastActive);
-            document.querySelectorAll(`[data-presence="${otherUid}"]`).forEach((dot) => {
-              dot.classList.toggle("online", online);
-            });
-            if (activeConvId && activeOtherUid === otherUid) {
-              const chatDot = document.getElementById("chatStatusDot");
-              if (chatDot) chatDot.classList.toggle("online", online);
-              const statusText = document.getElementById("chatStatusText");
-              if (!statusText.classList.contains("typing")) {
-                statusText.textContent = online
-                  ? "Online"
-                  : snap.data().lastActive
-                    ? "last seen " + relativeTime(snap.data().lastActive.toDate ? snap.data().lastActive.toDate() : snap.data().lastActive)
-                    : "Offline";
-              }
-            }
+            presenceCache.set(otherUid, snap.data().lastActive);
+            updatePresenceUI(otherUid, snap.data().lastActive);
           });
         });
       }
+
+      // Re‑evaluate every 5s so status flips automatically
+      setInterval(() => {
+        presenceCache.forEach((lastActiveRaw, otherUid) => updatePresenceUI(otherUid, lastActiveRaw));
+      }, 5000);
 
       listenConversations(user.uid, (convs) => {
         conversationsLoaded = true;
@@ -2010,6 +2039,12 @@
         document.getElementById("chatName").textContent = otherName;
         document.getElementById("chatAvatar").src = `https://api.dicebear.com/7.x/notionists/svg?seed=${otherUid}`;
         document.getElementById("chatStatusText").classList.remove("typing");
+        // Apply cached presence immediately so the header never shows blank/stale
+        if (presenceCache.has(otherUid)) {
+          updatePresenceUI(otherUid, presenceCache.get(otherUid));
+        } else {
+          document.getElementById("chatStatusText").textContent = "";
+        }
         showChatPage();
         history.pushState({ chat: true, convId }, "");
 
@@ -2095,8 +2130,8 @@
       }
 
       // ========== MESSAGES RENDERING ==========
-      function messageContentHtml(m) {
-        if (m.deleted) return `<div class="msg-text">This message was deleted</div>`;
+      function messageContentHtml(m, metaHtml = "") {
+        if (m.deleted) return `<div class="msg-text">This message was deleted${metaHtml}</div>`;
         if (m.type === "image")
           return `<div class="msg-media"><img src="${m.fileUrl}" data-msg="${m.id}" alt="photo"></div>`;
         if (m.type === "video")
@@ -2111,7 +2146,7 @@
             <span><div>${escapeHtml(m.fileName || "Attachment")}</div><div class="file-meta">${size}</div></span>
           </a>`;
         }
-        return `<div class="msg-text">${escapeHtml(m.text || "")}</div>`;
+        return `<div class="msg-text">${escapeHtml(m.text || "")}${metaHtml}</div>`;
       }
 
       function renderMessages() {
@@ -2129,7 +2164,20 @@
           }
           const mine = m.senderId === user.uid;
           const time = msgDate ? formatTime(msgDate) : "…";
-          let content = messageContentHtml(m);
+          const readClass = mine && m.readBy?.length > 1 ? "read" : "";
+          const editedTag = m.edited ? '<span class="edited-tag">edited</span>' : "";
+          const pinFlag = pinnedIds.has(m.id) ? '<span class="pin-flag">📌</span>' : "";
+          const starFlag = starredIds.has(m.id) ? '<span class="star-flag">⭐</span>' : "";
+          const statusTicks = `<span class="msg-status ${readClass}">${mine ? (m.readBy?.length > 1 ? "✓✓" : "✓") : ""}</span>`;
+          const metaInner = `${pinFlag}${starFlag}${editedTag}<span>${time}</span>${statusTicks}`;
+
+          // Text/deleted bubbles: meta floats INSIDE the text (WhatsApp-style)
+          // Media/file/audio bubbles: unchanged block row below the content
+          const isTextLike = m.deleted || m.type === "text" || !m.type;
+          const inlineMetaHtml = isTextLike ? `<span class="msg-text-inline-meta">${metaInner}</span>` : "";
+          const blockMetaHtml = isTextLike ? "" : `<div class="msg-meta">${metaInner}</div>`;
+
+          let content = messageContentHtml(m, inlineMetaHtml);
           if (m.replyTo && !m.deleted)
             content = `<div class="reply-quote" data-jump="${m.replyTo.id || ""}">${escapeHtml(m.replyTo.text || "Attachment")}</div>` + content;
           let reactionsHtml = "";
@@ -2139,24 +2187,16 @@
               .join(" ");
             reactionsHtml = `<div class="msg-reactions">${reactionStr}</div>`;
           }
-          const readClass = mine && m.readBy?.length > 1 ? "read" : "";
-          const editedTag = m.edited ? '<span class="edited-tag">edited</span>' : "";
-          const pinFlag = pinnedIds.has(m.id) ? '<span class="pin-flag">📌</span>' : "";
-          const starFlag = starredIds.has(m.id) ? '<span class="star-flag">⭐</span>' : "";
           html += `
-      <div class="msg-row ${mine ? "mine" : ""}" data-msg-id="${m.id}">
-        <div class="msg-bubble-col">
-          <div class="msg-bubble ${m.deleted ? "deleted" : ""}">
-            ${content}
-            <div class="msg-meta">
-              ${pinFlag}${starFlag}${editedTag}
-              <span>${time}</span>
-              <span class="msg-status ${readClass}">${mine ? (m.readBy?.length > 1 ? "✓✓" : "✓") : ""}</span>
-            </div>
-          </div>
-          ${reactionsHtml}
-        </div>
-      </div>`;
+            <div class="msg-row ${mine ? "mine" : ""}" data-msg-id="${m.id}">
+              <div class="msg-bubble-col">
+                <div class="msg-bubble ${m.deleted ? "deleted" : ""}">
+                  ${content}
+                  ${blockMetaHtml}
+                </div>
+                ${reactionsHtml}
+              </div>
+            </div>`;
         });
         chatBody.innerHTML = html;
         if (wasAtBottom) chatBody.scrollTop = chatBody.scrollHeight;
