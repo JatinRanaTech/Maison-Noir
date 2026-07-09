@@ -92,13 +92,21 @@ export async function setTyping(convId, isTyping) {
 }
 
 // Modified sendMessage: now accepts an optional replyTo { id, text }
-export async function sendMessage(convId, otherUid, { type = "text", text = "", file = null, replyTo = null } = {}) {
+export async function sendMessage(convId, otherUid, { type = "text", text = "", file = null, fileUrl = null, fileName = "", fileType = "", fileSize = 0, replyTo = null } = {}) {
   const me = auth.currentUser;
   const msg = { senderId: me.uid, type, text, createdAt: serverTimestamp(), readBy: [me.uid] };
 
   if (file) {
+    // Upload the raw file (as before)
     Object.assign(msg, await attachFile(convId, file));
     msg.type = msg.type || type;
+  } else if (fileUrl) {
+    // Use pre‑provided URL (base64, GIF, forwarded, etc.)
+    msg.fileUrl = fileUrl;
+    msg.fileName = fileName || (type === "image" ? "image.jpg" : type === "audio" ? "voice.ogg" : "file");
+    msg.fileType = fileType || (type === "image" ? "image/jpeg" : type === "audio" ? "audio/ogg" : "application/octet-stream");
+    msg.fileSize = fileSize || 0;
+    msg.type = type;  // image, audio, video, file
   }
 
   if (replyTo) {
@@ -107,13 +115,12 @@ export async function sendMessage(convId, otherUid, { type = "text", text = "", 
 
   await addDoc(collection(db, "conversations", convId, "messages"), msg);
   await updateDoc(doc(db, "conversations", convId), {
-    lastMessage: type === "text" ? text : `📎 ${file?.name || "Attachment"}`,
+    lastMessage: type === "text" ? text : `📎 ${file?.name || fileName || "Attachment"}`,
     lastMessageAt: serverTimestamp(),
     [`unread.${otherUid}`]: increment(1),
   });
   await setTyping(convId, false);
 }
-
 // Uploads to Firebase Storage, or falls back to base64-in-Firestore for
 // small images if USE_BASE64_FALLBACK is enabled (Spark/no-Storage mode).
 async function attachFile(convId, file, onProgress) {

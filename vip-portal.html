@@ -2178,9 +2178,9 @@
         sendBtnEl.classList.toggle("hidden", !hasText);
         // Typing indicator — fixed: this was previously imported but never called
         if (activeConvId) {
-          setTyping(activeConvId, user.uid, true);
+          setTyping(activeConvId, true);
           clearTimeout(typingTimeout);
-          typingTimeout = setTimeout(() => setTyping(activeConvId, user.uid, false), 2500);
+          typingTimeout = setTimeout(() => setTyping(activeConvId, false), 2500);
         }
       });
       msgInput.addEventListener("keydown", (e) => {
@@ -2201,7 +2201,7 @@
         sendBtnEl.classList.add("sending");
         setTimeout(() => sendBtnEl.classList.remove("sending"), 400);
         clearTimeout(typingTimeout);
-        setTyping(activeConvId, user.uid, false);
+        setTyping(activeConvId, false);
         const msg = { type: "text", text };
         if (replyTarget) {
           msg.replyTo = { id: replyTarget.id, text: replyTarget.text };
