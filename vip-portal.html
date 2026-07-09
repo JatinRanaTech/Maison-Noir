@@ -2380,9 +2380,13 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
 
       // ========== HELPERS ==========
       function otherParticipant(conv) {
-        const otherUid = conv.participants.find((p) => p !== user.uid);
-        return { uid: otherUid, ...conv.participantInfo[otherUid] };
-      }
+  const otherUid = conv.participants.find((p) => p !== user.uid);
+  const base = { uid: otherUid, ...conv.participantInfo[otherUid] };
+  const live = userDocCache.get(otherUid);
+  if (live?.photoURL) base.photoURL = live.photoURL;
+  if (live?.username) base.username = live.username;
+  return base;
+}
 
       function formatDate(date) {
         const today = new Date(),
@@ -2481,7 +2485,7 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
       <div class="conv-item" style="animation-delay:${i * 0.03}s" data-conv="${c.id}" data-other="${other.uid}" data-name="${escapeHtml(other.username || "")}">
         <div class="avatar-wrap">
           <img class="avatar" src="${avatarUrl(other)}">
-          <span class="status-dot" data-presence="${other.uid}"></span>
+          <span class="status-dot ${presenceCache.get(other.uid) && isOnline(presenceCache.get(other.uid)) ? "online" : ""}" data-presence="${other.uid}"></span>
         </div>
         <div class="conv-meta">
           <div class="conv-name-row"><span class="name-text">${escapeHtml(other.username || "Unknown")}</span>${pin}</div>
@@ -2522,12 +2526,10 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
       const presenceCache = new Map(); // otherUid -> raw lastActive value
       const userDocCache = new Map();
       function updateAvatarUI(otherUid, data) {
-  const url = avatarUrl({ uid: otherUid, photoURL: data?.photoURL });
-  document
-    .querySelectorAll(`.conv-item[data-other="${otherUid}"] .avatar`)
-    .forEach((img) => { img.src = url; });
+  // Force full list refresh so all avatars use the live cache
+  renderConvList(document.getElementById("convSearch")?.value || "");
   if (activeConvId && activeOtherUid === otherUid) {
-    document.getElementById("chatAvatar").src = url;
+    document.getElementById("chatAvatar").src = avatarUrl({ uid: otherUid, photoURL: data?.photoURL });
   }
 }
       function updatePresenceUI(otherUid, lastActiveRaw) {
@@ -2683,7 +2685,12 @@ updateAvatarUI(otherUid, data);
           document.getElementById("chatStatusText").textContent = "";
         }
         showChatPage();
-        history.pushState({ chat: true, page: "chat", convId }, "");
+        const chatState = { chat: true, page: "chat", convId };
+if (history.state && history.state.page === "chat") {
+  history.replaceState(chatState, "");   // switching chats: don't stack entries
+} else {
+  history.pushState(chatState, "");      // entering chat from list: stack once
+}
 
         const convRef = doc(db, "conversations", convId);
         const convSnap = await getDoc(convRef);
