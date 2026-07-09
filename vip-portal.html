@@ -1883,6 +1883,22 @@
       </div>
     </div>
 
+    <!-- ============ Confirm Modal (premium) ============ -->
+<div class="modal-scrim" id="confirmModal">
+  <div class="modal-box" style="max-width:340px; text-align:center;">
+    <div class="modal-body" style="padding-top:28px;">
+      <div style="font-size:2.2rem; margin-bottom:10px; color:var(--danger);">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <h4 id="confirmTitle" style="margin:0 0 8px; color:var(--gold-soft); letter-spacing:.02em;">Delete Conversation</h4>
+      <p id="confirmMessage" style="color:var(--text-muted); font-size:.88rem; margin-bottom:20px;">This action cannot be undone.</p>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-outline btn-block" id="confirmCancelBtn">Cancel</button>
+        <button class="btn btn-block" id="confirmOkBtn" style="background:linear-gradient(135deg,var(--danger),#a83224); color:#fff;">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
     <!-- ============ Fullscreen media viewer ============ -->
     <div class="fullscreen-viewer" id="fullscreenViewer">
       <button class="fv-close" id="fvClose">✕</button>
@@ -1970,6 +1986,21 @@
         },
       };
       const pinnedChats = new Set(LS.get("mn_pinnedChats", []));
+      const hiddenConvsMap = LS.get("mn_hiddenConvs", {});
+
+function isHiddenForMe(c) {
+  const hiddenAt = hiddenConvsMap[c.id];
+  if (!hiddenAt) return false;
+  const lastMs = c.lastMessageAt
+    ? (c.lastMessageAt.toMillis ? c.lastMessageAt.toMillis() : new Date(c.lastMessageAt).getTime())
+    : 0;
+  if (lastMs > hiddenAt) {
+    delete hiddenConvsMap[c.id];
+    LS.set("mn_hiddenConvs", hiddenConvsMap);
+    return false;
+  }
+  return true;
+}
       const favoriteWallpapers = new Set(LS.get("mn_favWallpapers", []));
       const recentWallpapers = LS.get("mn_recentWallpapers", []);
       const recentEmojis = LS.get("mn_recentEmojis", []);
@@ -2025,6 +2056,31 @@
         setTimeout(() => el.remove(), 2600);
       }
 
+      function showConfirmModal({ title = "Are you sure?", message = "", confirmText = "Delete" } = {}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("confirmModal");
+    const okBtn = document.getElementById("confirmOkBtn");
+    const cancelBtn = document.getElementById("confirmCancelBtn");
+    document.getElementById("confirmTitle").textContent = title;
+    document.getElementById("confirmMessage").textContent = message;
+    okBtn.textContent = confirmText;
+
+    function cleanup(result) {
+      modal.classList.remove("open");
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      resolve(result);
+    }
+    function onOk() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    modal.classList.add("open");
+  });
+}
+document.getElementById("confirmModal").addEventListener("click", (e) => {
+  if (e.target.id === "confirmModal") document.getElementById("confirmCancelBtn").click();
+});
       // Ripple effect for all buttons
       document.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-icon, .btn, .picker-tab");
@@ -2397,6 +2453,7 @@
         const emptyState = document.getElementById("convEmptyState");
         const f = filter.toLowerCase();
         const filtered = conversations.filter((c) => {
+          if (isHiddenForMe(c)) return false;
           const other = otherParticipant(c);
           return (other.username || "").toLowerCase().includes(f);
         });
@@ -2463,7 +2520,16 @@
       }
 
       const presenceCache = new Map(); // otherUid -> raw lastActive value
-
+      const userDocCache = new Map();
+      function updateAvatarUI(otherUid, data) {
+  const url = avatarUrl({ uid: otherUid, photoURL: data?.photoURL });
+  document
+    .querySelectorAll(`.conv-item[data-other="${otherUid}"] .avatar`)
+    .forEach((img) => { img.src = url; });
+  if (activeConvId && activeOtherUid === otherUid) {
+    document.getElementById("chatAvatar").src = url;
+  }
+}
       function updatePresenceUI(otherUid, lastActiveRaw) {
         const online = isOnline(lastActiveRaw);
         document
@@ -2505,8 +2571,11 @@
           const userRef = doc(db, "users", otherUid);
           onSnapshot(userRef, (snap) => {
             if (!snap.exists()) return;
-            presenceCache.set(otherUid, snap.data().lastActive);
-            updatePresenceUI(otherUid, snap.data().lastActive);
+const data = snap.data();
+presenceCache.set(otherUid, data.lastActive);
+userDocCache.set(otherUid, data);
+updatePresenceUI(otherUid, data.lastActive);
+updateAvatarUI(otherUid, data);
           });
         });
       }
@@ -2602,8 +2671,10 @@
         document.getElementById("chatStatusText").classList.remove("typing");
         localStorage.setItem("maison_lastChat", convId);
         document.getElementById("chatName").textContent = otherName;
-        document.getElementById("chatAvatar").src =
-          `https://api.dicebear.com/7.x/notionists/svg?seed=${otherUid}`;
+        document.getElementById("chatAvatar").src = avatarUrl({
+  uid: otherUid,
+  photoURL: userDocCache.get(otherUid)?.photoURL,
+});
         document.getElementById("chatStatusText").classList.remove("typing");
         // Apply cached presence immediately so the header never shows blank/stale
         if (presenceCache.has(otherUid)) {
@@ -3170,16 +3241,18 @@
             renderMessages();
             showToast("Deleted for you");
           } else if (action === "deleteEveryone") {
-            if (confirm("Delete this message for everyone?")) {
-              await updateDoc(
-                doc(db, "conversations", activeConvId, "messages", msgId),
-                {
-                  deleted: true,
-                  text: "",
-                },
-              );
-            }
-          }
+  const ok = await showConfirmModal({
+    title: "Delete for Everyone",
+    message: "This message will be removed for everyone in this chat.",
+    confirmText: "Delete",
+  });
+  if (ok) {
+    await updateDoc(
+      doc(db, "conversations", activeConvId, "messages", msgId),
+      { deleted: true, text: "" },
+    );
+  }
+}
         });
       });
 
@@ -3417,21 +3490,40 @@
         );
 
       async function deleteActiveConversation() {
-        if (!confirm("Delete this conversation permanently?")) return;
-        const messagesRef = collection(
-          db,
-          "conversations",
-          activeConvId,
-          "messages",
-        );
-        const snapshot = await getDocs(messagesRef);
-        const batch = writeBatch(db);
-        snapshot.forEach((d) => batch.delete(d.ref));
-        await batch.commit();
-        await deleteDoc(doc(db, "conversations", activeConvId));
-        showList();
-        history.back();
-      }
+  const ok = await showConfirmModal({
+    title: "Delete Conversation",
+    message: "Chat history will be cleared. Wallpaper stays saved.",
+    confirmText: "Delete",
+  });
+  if (!ok) return;
+
+  const messagesRef = collection(db, "conversations", activeConvId, "messages");
+  const snapshot = await getDocs(messagesRef);
+  const batch = writeBatch(db);
+  snapshot.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+
+  // Reset preview fields only – NEVER touch wallpaper
+  await updateDoc(doc(db, "conversations", activeConvId), {
+    lastMessage: "",
+    lastMessageAt: null,
+    lastSenderId: null,
+    lastRead: true,
+    [`unread.${user.uid}`]: 0,
+  });
+
+  // Clean local caches for that conversation
+  localStorage.removeItem(pinnedKey(activeConvId));
+  localStorage.removeItem(starredKey(activeConvId));
+  localStorage.removeItem(hiddenIdsKey(activeConvId));
+
+  // Hide from my list until a new message arrives
+  hiddenConvsMap[activeConvId] = Date.now();
+  LS.set("mn_hiddenConvs", hiddenConvsMap);
+
+  showList();
+  history.back();
+}
 
       // ========== FULLSCREEN MEDIA VIEWER ==========
       function openFullscreenViewer(msgId) {
