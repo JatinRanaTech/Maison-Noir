@@ -1,0 +1,83 @@
+/* ==========================================================================
+   MAISON NOIR — Design Tokens
+   Editorial fashion system: ink black, bone paper, signal red, foil gold (VIP)
+   Type: "Fraunces" (display serif, runs at heavy optical sizes) +
+         "Inter" (body) + "JetBrains Mono" (price tags / utility data)
+   ========================================================================== */
+
+:root{
+  /* --- Color: light (paper) mode --- */
+  --ink:            #121212;
+  --ink-soft:       #3a3a3a;
+  --paper:          #FAF9F6;
+  --paper-dim:      #F0EEE9;
+  --surface:        #FFFFFF;
+  --surface-2:      #F4F2ED;
+  --line:           rgba(18,18,18,0.12);
+  --line-strong:    rgba(18,18,18,0.28);
+
+  --signal:         #C81E3A;   /* runway red — CTAs, sale tags */
+  --signal-ink:     #7d1226;
+  --gold:           #B08D2B;   /* VIP foil accent */
+  --gold-soft:      #E7D9A8;
+  --success:        #2E6B4F;
+  --info:           #2A4B8D;
+
+  --glass-bg:       rgba(255,255,255,0.55);
+  --glass-border:   rgba(255,255,255,0.35);
+
+  --shadow-sm:      0 1px 2px rgba(18,18,18,0.06);
+  --shadow-md:      0 8px 24px rgba(18,18,18,0.10);
+  --shadow-lg:      0 24px 60px rgba(18,18,18,0.16);
+
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --nav-h: 76px;
+  --container: 1360px;
+
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --ease-in-out: cubic-bezier(.65,0,.35,1);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"]{
+  --ink:            #F3F1EC;
+  --ink-soft:       #C9C6BE;
+  --paper:          #121212;
+  --paper-dim:      #1A1A1A;
+  --surface:        #181818;
+  --surface-2:      #1F1F1F;
+  --line:           rgba(255,255,255,0.12);
+  --line-strong:    rgba(255,255,255,0.24);
+
+  --signal:         #FF4D63;
+  --signal-ink:     #ffb3bc;
+  --gold:           #E3C465;
+  --gold-soft:      #4a3d17;
+
+  --glass-bg:       rgba(24,24,24,0.55);
+  --glass-border:   rgba(255,255,255,0.08);
+
+  --shadow-sm:      0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md:      0 8px 24px rgba(0,0,0,0.5);
+  --shadow-lg:      0 24px 60px rgba(0,0,0,0.6);
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

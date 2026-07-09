@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAISON NOIR — Modern Fashion, Considered</title>
+<meta name="description" content="MAISON NOIR is a premium fashion destination for men and women — tailored outerwear, knitwear, and footwear, plus an exclusive VIP members community.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+<style>
+  /* Quick hero fix if responsive.css hasn't been updated yet */
+  .hero, .hero-slides { background-color: #111; overflow: hidden; }
+  .hero-slide { width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; }
+  @media (max-width:600px) {
+    .hero-slide { aspect-ratio:9/16; }
+    .hero-content h1 { font-size:2.5rem; }
+    .hero-cta-row { flex-direction:column; gap:12px; }
+    .hero-cta-row .btn { width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="shop.html?gender=men">Men</a>
+      <a href="shop.html?gender=women">Women</a>
+      <a href="shop.html?sort=newest">New Arrivals</a>
+      <a href="shop.html?sale=1">Sale</a>
+      <a href="vip-login.html" class="vip-link">VIP Members</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+      <a class="nav-icon-btn" href="wishlist.html" aria-label="Wishlist">♡<span class="badge-count hidden" data-wishlist-count>0</span></a>
+      <a class="nav-icon-btn" href="cart.html" aria-label="Cart">🛍<span class="badge-count hidden" data-cart-count>0</span></a>
+      <a class="nav-icon-btn" href="login.html" data-account-link aria-label="Account">☰</a>
+      <button class="nav-icon-btn nav-toggle" data-drawer-open aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-drawer" data-mobile-drawer>
+  <div class="scrim"></div>
+  <div class="panel">
+    <a href="shop.html?gender=men">Men</a>
+    <a href="shop.html?gender=women">Women</a>
+    <a href="shop.html?sort=newest">New Arrivals</a>
+    <a href="shop.html?sale=1">Sale</a>
+    <a href="vip-login.html">VIP Members</a>
+    <a href="wishlist.html">Wishlist</a>
+    <a href="cart.html">Cart</a>
+    <a href="login.html" data-account-link>Account</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-marquee"><span>NEW SEASON — TAILORED OUTERWEAR &nbsp;•&nbsp; FREE SHIPPING OVER $150 &nbsp;•&nbsp; VIP EARLY ACCESS &nbsp;•&nbsp; NEW SEASON — TAILORED OUTERWEAR &nbsp;•&nbsp; FREE SHIPPING OVER $150 &nbsp;•&nbsp; VIP EARLY ACCESS &nbsp;•&nbsp;</span></div>
+  <div class="hero-slides" id="heroSlides"></div>
+  <div class="container hero-content">
+    <p class="eyebrow" style="color:#fff;opacity:.8;">Fall / Winter Collection</p>
+    <h1 class="display-xl">Considered<br>clothing for<br>the long run.</h1>
+    <div class="hero-cta-row">
+      <a href="shop.html" class="btn btn-signal">Shop the Collection</a>
+      <a href="shop.html?gender=women" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5)">Women's Edit →</a>
+    </div>
+  </div>
+  <div class="hero-dots" id="heroDots"></div>
+</header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">Shop by Category</p><h2 class="display-lg">Featured Collections</h2></div>
+      </div>
+      <div class="cat-grid">
+        <a class="cat-card" href="shop.html?gender=men">
+          <img src="images/collections/men.jpg" alt="Men's Collection" loading="lazy">
+          <div class="label"><p class="eyebrow">Menswear</p><h3>Men's Collection</h3></div>
+        </a>
+        <a class="cat-card" href="shop.html?gender=women">
+          <img src="images/collections/women.jpg" alt="Women's Collection" loading="lazy">
+          <div class="label"><p class="eyebrow">Womenswear</p><h3>Women's Collection</h3></div>
+        </a>
+        <a class="cat-card" href="shop.html?category=footwear">
+          <img src="images/collections/footwear.jpg" alt="Footwear" loading="lazy">
+          <div class="label"><p class="eyebrow">Footwear</p><h3>Boots &amp; Shoes</h3></div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-tight">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">Handpicked</p><h2 class="display-lg">Trending Now</h2></div>
+        <a href="shop.html?sort=popularity" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div class="product-grid" id="trendingGrid"></div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="promo-banner">
+        <div>
+          <p class="eyebrow" style="color:var(--gold);">VIP Members Community</p>
+          <h2 class="display-md" style="color:#fff;max-width:480px;">Private access, direct lines to the studio, real-time chat with fellow members.</h2>
+        </div>
+        <a href="vip-login.html" class="btn btn-gold">Enter VIP Portal →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">Just Landed</p><h2 class="display-lg">New Arrivals</h2></div>
+        <a href="shop.html?sort=newest" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div class="product-grid" id="newArrivalsGrid"></div>
+    </div>
+  </section>
+
+  <section class="section section-tight">
+    <div class="container">
+      <div class="section-head"><div><p class="eyebrow">Best Sellers</p><h2 class="display-lg">Most Loved</h2></div></div>
+      <div class="product-grid" id="bestSellersGrid"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head"><div><p class="eyebrow">Community</p><h2 class="display-lg">What Members Say</h2></div></div>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <p class="stars">★★★★★</p>
+          <p class="mt-16">"The quality is unlike anything in this price range. My overcoat still looks new after two winters."</p>
+          <p class="mt-16 text-muted eyebrow">— Naomi R., Verified Buyer</p>
+        </div>
+        <div class="testimonial-card">
+          <p class="stars">★★★★★</p>
+          <p class="mt-16">"VIP portal is a nice surprise — direct chat with the design team helped me pick the right size every time."</p>
+          <p class="mt-16 text-muted eyebrow">— Devan K., VIP Member</p>
+        </div>
+        <div class="testimonial-card">
+          <p class="stars">★★★★☆</p>
+          <p class="mt-16">"Fast shipping, easy returns, and the checkout experience is genuinely the smoothest I've used."</p>
+          <p class="mt-16 text-muted eyebrow">— Priya S., Verified Buyer</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="newsletter-band">
+        <p class="eyebrow" style="color:var(--gold-soft);">Stay in the loop</p>
+        <h2 class="display-md" style="color:#fff;">10% off your first order, plus early drops.</h2>
+        <form class="newsletter-form" id="newsletterForm">
+          <input type="email" placeholder="you@email.com" required>
+          <button class="btn btn-signal" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="brand" style="color:#fff;">MAISON <em>NOIR</em></a>
+        <p class="mt-16" style="max-width:280px;opacity:.7;font-size:.9rem;">Considered clothing, made to last. Designed in-house, shipped worldwide.</p>
+        <div class="social-row">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="Pinterest">P</a>
+          <a href="#" aria-label="TikTok">TT</a>
+        </div>
+      </div>
+      <div><h4>Shop</h4><ul>
+        <li><a href="shop.html?gender=men">Men</a></li>
+        <li><a href="shop.html?gender=women">Women</a></li>
+        <li><a href="shop.html?sort=newest">New Arrivals</a></li>
+        <li><a href="shop.html?sale=1">Sale</a></li>
+      </ul></div>
+      <div><h4>Account</h4><ul>
+        <li><a href="account.html">My Account</a></li>
+        <li><a href="wishlist.html">Wishlist</a></li>
+        <li><a href="cart.html">Cart</a></li>
+        <li><a href="vip-login.html">VIP Members</a></li>
+      </ul></div>
+      <div><h4>Support</h4><ul>
+        <li><a href="#">Shipping &amp; Returns</a></li>
+        <li><a href="#">Size Guide</a></li>
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MAISON NOIR. All rights reserved.</span>
+      <span>Privacy Policy · Terms of Service</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+  import "./js/theme.js";
+  import "./js/nav.js";
+  import { getAllProducts, filterAndSort, productCardHTML, skeletonCardHTML } from "./js/products.js";
+  import { toast } from "./js/utils.js";
+  import { addToCart } from "./js/cart.js";
+  import { toggleWishlist } from "./js/wishlist.js";
+
+  // ==================== HERO SLIDER WITH MOBILE IMAGE SWITCH ====================
+  const slides = [
+    { img: "images/hero/hero1.jpg", mobileImg: "images/hero/mobile/hero1.jpg" },
+    { img: "images/hero/hero2.jpg", mobileImg: "images/hero/mobile/hero2.jpg" },
+    { img: "images/hero/hero3.jpg", mobileImg: "images/hero/mobile/hero3.jpg" },
+  ];
+
+  const slidesEl = document.getElementById("heroSlides");
+  const dotsEl = document.getElementById("heroDots");
+  let current = 0;
+  let slideDivs = []; // store references for dynamic image updates
+
+  function isMobile() {
+    return window.innerWidth <= 600;
+  }
+
+  function createSlides() {
+    slidesEl.innerHTML = "";
+    dotsEl.innerHTML = "";
+    slideDivs = [];
+    slides.forEach((s, i) => {
+      const div = document.createElement("div");
+      div.className = "hero-slide" + (i === 0 ? " active" : "");
+      // set initial background image based on current screen size
+      div.style.backgroundImage = `url('${isMobile() ? s.mobileImg : s.img}')`;
+      slidesEl.appendChild(div);
+      slideDivs.push(div);
+
+      const dot = document.createElement("button");
+      if (i === 0) dot.classList.add("active");
+      dot.addEventListener("click", () => showSlide(i));
+      dotsEl.appendChild(dot);
+    });
+  }
+
+  function showSlide(i) {
+    slideDivs.forEach((d, idx) => d.classList.toggle("active", idx === i));
+    document.querySelectorAll(".hero-dots button").forEach((d, idx) => d.classList.toggle("active", idx === i));
+    current = i;
+  }
+
+  // Switch images when resizing between mobile/desktop
+  function updateSlideImages() {
+    const mobile = isMobile();
+    slides.forEach((s, i) => {
+      if (slideDivs[i]) {
+        slideDivs[i].style.backgroundImage = `url('${mobile ? s.mobileImg : s.img}')`;
+      }
+    });
+  }
+
+  window.addEventListener("resize", updateSlideImages);
+
+  // Initialize slider
+  createSlides();
+  setInterval(() => showSlide((current + 1) % slides.length), 5000);
+
+  // ==================== PRODUCT RAILS ====================
+  ["trendingGrid", "newArrivalsGrid", "bestSellersGrid"].forEach((id) => {
+    document.getElementById(id).innerHTML = Array(4).fill(skeletonCardHTML()).join("");
+  });
+
+  getAllProducts().then((products) => {
+    const trending = filterAndSort(products, { sort: "popularity" }).slice(0, 4);
+    const arrivals = filterAndSort(products, { sort: "newest" }).slice(0, 4);
+    const bestSellers = filterAndSort(products, { sort: "rating" }).slice(0, 4);
+    document.getElementById("trendingGrid").innerHTML = trending.map(productCardHTML).join("");
+    document.getElementById("newArrivalsGrid").innerHTML = arrivals.map(productCardHTML).join("");
+    document.getElementById("bestSellersGrid").innerHTML = bestSellers.map(productCardHTML).join("");
+    wireGridActions(products);
+  });
+
+  function wireGridActions(products) {
+    document.querySelectorAll("[data-quick-add]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = products.find((x) => x.id === btn.dataset.quickAdd);
+        addToCart(p, { size: p.sizes[0], color: p.colors[0].label, qty: 1 });
+        toast(`Added "${p.name}" to cart`, "success");
+      });
+    });
+    document.querySelectorAll("[data-wishlist-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = products.find((x) => x.id === btn.dataset.wishlistToggle);
+        const added = toggleWishlist(p);
+        btn.classList.toggle("active", added);
+        btn.textContent = added ? "♥" : "♡";
+        toast(added ? "Added to wishlist" : "Removed from wishlist");
+      });
+    });
+  }
+
+  document.getElementById("newsletterForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    toast("Thanks for subscribing! Check your inbox for 10% off.", "success");
+    e.target.reset();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+/* ==========================================================================
+   MAISON NOIR - RESPONSIVE OVERRIDES (mobile-first)
+   ========================================================================== */
+
+/* General mobile adjustments */
+@media (max-width: 900px) {
+  /* Typography */
+  h1.display-lg {
+    font-size: 2rem !important;
+  }
+  h2.display-md {
+    font-size: 1.6rem !important;
+  }
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Navigation */
+  .nav-links {
+    display: none;
+  }
+  .nav .nav-inner {
+    justify-content: space-between;
+  }
+  .nav-icon-btn {
+    font-size: 1.2rem;
+    padding: 8px;
+  }
+
+  /* Shop layout: filter panel becomes off-canvas */
+  .shop-layout {
+    display: block !important;
+  }
+  .filter-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 270px;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--surface);
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    padding: 20px;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+  }
+  .filter-panel.open {
+    transform: translateX(0);
+  }
+  .filter-mobile-toggle {
+    display: inline-block !important;
+    margin-bottom: 16px;
+  }
+  .filter-panel .filter-close-btn {
+    display: block !important;
+    float: right;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  /* Product grid */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .product-card .product-image {
+    aspect-ratio: 3/4;
+  }
+  .product-card .product-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .product-card .btn-sm {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+  }
+
+  /* Quick view modal */
+  #quickViewModal .modal-box {
+    width: 95% !important;
+    margin: 10px auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  #quickViewModal .modal-body > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cart table */
+  table.cart-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Account / Order history */
+  .order-card {
+    padding: 16px;
+  }
+
+  /* Modal general */
+  .modal-box {
+    width: 90% !important;
+    max-width: 100%;
+  }
+}
+
+/* Even smaller phones */
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .product-card h3 {
+    font-size: 0.85rem;
+  }
+  .product-card .price {
+    font-size: 0.9rem;
+  }
+  .nav .brand {
+    font-size: 1.2rem;
+  }
+}
+
+/* ==========================================================================
+   IMAGES – prevent overflow on all screens
+   ========================================================================== */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==========================================================================
+   NEWSLETTER BAND – dark background so white text is visible
+   ========================================================================== */
+.newsletter-band {
+  background-color: #111;
+  color: #fff;
+  padding: 40px 16px;
+  border-radius: 16px;
+  margin: 0 16px;
+}
+.newsletter-band h2 {
+  color: #fff !important;
+}
+
+/* Subscription forms – stack on small screens */
+.newsletter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .newsletter-form {
+    flex-direction: column;
+  }
+  .newsletter-form input,
+  .newsletter-form button {
+    width: 100%;
+  }
+}
+/* ==========================================================================
+   HERO – full-width, no overflow, dark background, mobile focus
+   ========================================================================== */
+.hero,
+.hero-slides {
+  width: 100%;
+  overflow: hidden;                /* ← crucial: hides any horizontal spill */
+  background-color: #111;          /* dark fallback, no white gaps */
+  margin: 0;
+  padding: 0;
+}
+
+.hero-slide {
+  width: 100%;
+  height: auto;
+  min-height: 60vh;                /* desktop height */
+  background-size: cover;
+  background-position: center;     /* default centre */
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .hero-slide {
+    min-height: 50vh;              /* slightly shorter on mobile */
+    background-position: 30% top;  /* shift focus to show the subject (adjust if needed) */
+  }
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+  .hero-cta-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .hero-cta-row .btn {
+    width: 100%;
+  }
+}
+/* Footer brand – dark colour so it's visible on light backgrounds */
+.footer .brand {
+  color: #111 !important;
+}
+/* Newsletter eyebrow – brighter colour for contrast on dark background */
+.newsletter-band .eyebrow {
+  color: var(--gold) !important;   /* brighter gold, or use #fff if you prefer */
+}

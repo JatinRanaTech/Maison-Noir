@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — MAISON NOIR</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-actions" style="margin-left:auto;">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+    </div>
+  </div>
+</nav>
+
+<main class="section">
+  <div class="container" style="max-width:640px;">
+    <div id="confirmContent" class="empty-state">
+      <div class="icon">✓</div>
+      <h3>Loading your order…</h3>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import "./js/theme.js";
+  import { formatCurrency } from "./js/utils.js";
+
+  const raw = sessionStorage.getItem("mn_last_order");
+  const el = document.getElementById("confirmContent");
+  if (!raw) {
+    el.innerHTML = `<div class="icon">🛍</div><h3>No recent order found</h3><a href="shop.html" class="btn btn-primary mt-24">Continue Shopping</a>`;
+  } else {
+    const order = JSON.parse(raw);
+    el.className = "";
+    el.innerHTML = `
+      <div style="text-align:center;">
+        <div style="font-size:3rem;">✓</div>
+        <h1 class="display-md mt-16">Thank you, ${order.shipping.fullName.split(" ")[0]}!</h1>
+        <p class="text-muted mt-8">Your order has been placed successfully.</p>
+        <div class="eyebrow mt-24">Order Number</div>
+        <div class="price" style="font-size:1.3rem;">${order.orderNumber}</div>
+      </div>
+      <div class="order-card mt-32">
+        <h4 class="mt-8" style="margin-bottom:14px;">Items</h4>
+        ${order.items.map((i) => `<div class="flex justify-between mt-8" style="font-size:.9rem;"><span>${i.qty} × ${i.name}</span><span class="price">${formatCurrency(i.price * i.qty)}</span></div>`).join("")}
+        <div class="summary-row total mt-16"><span>Total Paid</span><span class="price">${formatCurrency(order.totals.total)}</span></div>
+      </div>
+      <div class="order-card mt-16">
+        <h4 style="margin-bottom:8px;">Shipping To</h4>
+        <p class="text-muted" style="font-size:.9rem;">
+          ${order.shipping.address}, ${order.shipping.city}, ${order.shipping.state} ${order.shipping.postalCode}, ${order.shipping.country}
+        </p>
+      </div>
+      <div class="flex gap-12 mt-24">
+        <a href="shop.html" class="btn btn-outline" style="flex:1;">Continue Shopping</a>
+        <a href="account.html" class="btn btn-primary" style="flex:1;">View Order History</a>
+      </div>`;
+  }
+  sessionStorage.removeItem("mn_last_order");
+</script>
+</body>
+</html>

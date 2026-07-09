@@ -1,0 +1,121 @@
+rules_version = '2';
+
+// ============================================================================
+// FIRESTORE SECURITY RULES — MAISON NOIR
+//
+// Copy this entire file's contents into: Firebase Console -> Firestore
+// Database -> Rules tab -> Publish. See README.md "Firebase Setup" for the
+// full walkthrough including how to designate an admin account.
+// ============================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers ----
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isVipMember() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isVip == true;
+    }
+    // Set your own admin UID(s) here (Firebase Console -> Authentication -> Users
+    // -> copy the "User UID" column for your account). Used by admin-seed.html.
+    function isAdmin() {
+      return isSignedIn() && request.auth.uid in [
+        "nnG4bPiOMOc021ghy82cx3s2arZ2"
+      ];
+    }
+
+    // ---- Username -> email lookup table (used to log in with a username) ----
+    // Publicly readable so the login form can resolve "username" -> email
+    // BEFORE the user is authenticated. Only the account holder can create it,
+    // and it can never be edited or deleted by clients (prevents hijacking).
+    match /usernames/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---- User profiles (also doubles as the VIP membership flag + presence) ----
+    match /users/{uid} {
+      // Any signed-in user can read profiles (needed for the VIP member
+      // directory, chat participant info, and presence dots).
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) && (
+        // Normal profile edits (name, presence heartbeat, etc.) - isVip untouched
+        request.resource.data.isVip == resource.data.isVip
+        ||
+        // One-way VIP upgrade, only alongside a verified, still-unused invite
+        // code (see redeemedCode - matching write in js/vip-auth.js)
+        (
+          request.resource.data.isVip == true &&
+          resource.data.isVip != true &&
+          exists(/databases/$(database)/documents/vipInvites/$(request.resource.data.redeemedCode)) &&
+          get(/databases/$(database)/documents/vipInvites/$(request.resource.data.redeemedCode)).data.used == false
+        )
+      ) || isAdmin();
+      allow delete: if false;
+    }
+
+    // ---- VIP invite codes ----
+    match /vipInvites/{code} {
+      allow get: if isSignedIn();       // needed so rules above + client can check `exists()`/`used`
+      allow list: if isAdmin();
+      allow create: if isAdmin();       // only the admin mints codes (via admin-seed.html)
+      allow update: if isSignedIn()
+        && resource.data.used == false
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ---- Product catalog ----
+    match /products/{productId} {
+      allow read: if true;              // public catalog
+      allow write: if isAdmin();        // only admin-seed.html / console
+    }
+
+    // ---- Per-user cart & wishlist sync ----
+    match /carts/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+    match /wishlists/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ---- Orders ----
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid || isAdmin();
+      allow update, delete: if isAdmin(); // e.g. shipping-status changes via console
+    }
+
+    // ---- VIP chat: conversations ----
+    match /conversations/{convId} {
+      allow read: if isVipMember() && request.auth.uid in resource.data.participants;
+      allow create: if isVipMember() && request.auth.uid in request.resource.data.participants;
+      // Allow updating lastMessage/unread counters only by a participant
+      allow update: if isVipMember() && request.auth.uid in resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isVipMember() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow create: if isVipMember()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
+          && request.resource.data.senderId == request.auth.uid;
+        // Allow marking messages read (readBy array) by any participant; no edits to content
+        allow update: if isVipMember()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
+          && request.resource.data.text == resource.data.text;
+        allow delete: if false;
+      }
+
+      match /typing/{uid} {
+        allow read: if isVipMember();
+        allow write: if isOwner(uid) && isVipMember();
+      }
+    }
+  }
+}

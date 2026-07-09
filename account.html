@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — MAISON NOIR</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a><a href="shop.html?gender=men">Men</a><a href="shop.html?gender=women">Women</a>
+      <a href="vip-login.html" class="vip-link">VIP Members</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+      <a class="nav-icon-btn" href="wishlist.html" aria-label="Wishlist">♡<span class="badge-count hidden" data-wishlist-count>0</span></a>
+      <a class="nav-icon-btn" href="cart.html" aria-label="Cart">🛍<span class="badge-count hidden" data-cart-count>0</span></a>
+      <button class="nav-icon-btn nav-toggle" data-drawer-open aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-drawer" data-mobile-drawer><div class="scrim"></div><div class="panel">
+  <a href="shop.html?gender=men">Men</a><a href="shop.html?gender=women">Women</a><a href="vip-login.html">VIP Members</a>
+  <a href="wishlist.html">Wishlist</a><a href="cart.html">Cart</a>
+</div></div>
+
+<main class="section-tight">
+  <div class="container">
+    <h1 class="display-lg" style="margin-bottom:32px;">My Account</h1>
+    <div class="account-layout">
+      <nav class="account-nav">
+        <a href="#profile" class="active" data-panel="profile">Profile</a>
+        <a href="#orders" data-panel="orders">Order History</a>
+        <a href="#security" data-panel="security">Security</a>
+        <a href="wishlist.html">Wishlist</a>
+        <button class="btn btn-outline btn-block mt-16" id="logoutBtn">Sign Out</button>
+      </nav>
+
+      <div>
+        <section id="panel-profile">
+          <div class="order-card">
+            <h3 style="margin-bottom:18px;">Profile Information</h3>
+            <form id="profileForm">
+              <div class="field-row">
+                <div class="field"><label>Full Name</label><input name="fullName"></div>
+                <div class="field"><label>Username</label><input name="username" disabled></div>
+              </div>
+              <div class="field"><label>Email</label><input name="email" disabled></div>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="panel-orders" class="hidden">
+          <h3 style="margin-bottom:18px;">Order History</h3>
+          <div id="ordersList"></div>
+        </section>
+
+        <section id="panel-security" class="hidden">
+          <div class="order-card">
+            <h3 style="margin-bottom:12px;">Password</h3>
+            <p class="text-muted" style="font-size:.9rem;">Use the "Forgot password" flow on the sign-in page to reset your password via email.</p>
+            <a href="login.html" class="btn btn-outline mt-16">Go to Sign In Page</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import "./js/theme.js";
+  import "./js/nav.js";
+  import { requireAuth, getUserProfile, updateUserProfile, logOut } from "./js/auth.js";
+  import { getOrdersForUser, statusClass } from "./js/orders.js";
+  import { formatCurrency, formatDate, toast } from "./js/utils.js";
+
+  const user = await requireAuth();
+  const profile = await getUserProfile(user.uid);
+
+  const form = document.getElementById("profileForm");
+  form.fullName.value = profile?.fullName || user.displayName || "";
+  form.username.value = profile?.username || "";
+  form.email.value = user.email || "";
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await updateUserProfile(user.uid, { fullName: form.fullName.value });
+    toast("Profile updated", "success");
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => { await logOut(); location.href = "index.html"; });
+
+  document.querySelectorAll(".account-nav a[data-panel]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".account-nav a[data-panel]").forEach((l) => l.classList.remove("active"));
+      link.classList.add("active");
+      ["profile", "orders", "security"].forEach((p) => document.getElementById(`panel-${p}`).classList.toggle("hidden", p !== link.dataset.panel));
+    });
+  });
+
+  const orders = await getOrdersForUser(user.uid);
+  const ordersList = document.getElementById("ordersList");
+  if (orders.length === 0) {
+    ordersList.innerHTML = `<div class="empty-state"><h3>No orders yet</h3><a href="shop.html" class="btn btn-primary mt-16">Start Shopping</a></div>`;
+  } else {
+    ordersList.innerHTML = orders.map((o) => `
+      <div class="order-card">
+        <div class="flex justify-between items-center">
+          <div>
+            <strong>${o.orderNumber}</strong>
+            <div class="text-muted" style="font-size:.82rem;">${o.createdAt ? formatDate(o.createdAt) : "Processing"}</div>
+          </div>
+          <span class="order-status ${statusClass(o.status)}">${o.status}</span>
+        </div>
+        <div class="mt-16" style="font-size:.88rem;">
+          ${o.items.map((i) => `<div class="flex justify-between mt-8"><span>${i.qty} × ${i.name}</span><span class="price">${formatCurrency(i.price * i.qty)}</span></div>`).join("")}
+        </div>
+        <div class="summary-row total mt-16"><span>Total</span><span class="price">${formatCurrency(o.totals.total)}</span></div>
+      </div>`).join("");
+  }
+</script>
+</body>
+</html>

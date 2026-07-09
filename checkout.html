@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — MAISON NOIR</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-actions" style="margin-left:auto;">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+    </div>
+  </div>
+</nav>
+
+<main class="section-tight">
+  <div class="container">
+    <p class="eyebrow">Step 2 of 3</p>
+    <h1 class="display-lg" style="margin-bottom:32px;">Checkout</h1>
+
+    <div id="checkoutEmpty" class="empty-state hidden">
+      <h3>Your cart is empty</h3>
+      <a href="shop.html" class="btn btn-primary mt-16">Shop Now</a>
+    </div>
+
+    <form id="checkoutForm" class="checkout-layout" novalidate>
+      <div>
+        <div class="checkout-step">
+          <h3><span class="step-num">1</span>Contact &amp; Shipping</h3>
+          <div class="field-row mt-24">
+            <div class="field"><label>Full Name</label><input name="fullName" required><span class="error"></span></div>
+            <div class="field"><label>Email</label><input name="email" type="email" required><span class="error"></span></div>
+          </div>
+          <div class="field"><label>Phone</label><input name="phone" required><span class="error"></span></div>
+          <div class="field"><label>Address</label><input name="address" required><span class="error"></span></div>
+          <div class="field-row">
+            <div class="field"><label>City</label><input name="city" required><span class="error"></span></div>
+            <div class="field"><label>State</label><input name="state" required><span class="error"></span></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Postal Code</label><input name="postalCode" required><span class="error"></span></div>
+            <div class="field"><label>Country</label><input name="country" required value="United States"><span class="error"></span></div>
+          </div>
+        </div>
+
+        <div class="checkout-step">
+          <h3><span class="step-num">2</span>Payment</h3>
+          <p class="hint mt-8">Choose Debit or Credit card below</p>
+          <div class="pay-methods mt-16">
+            <button type="button" class="pay-method selected" data-method="credit">Credit Card</button>
+            <button type="button" class="pay-method" data-method="debit">Debit Card</button>
+          </div>
+          <div class="card-mock" id="cardPreview">
+            <div style="display:flex;justify-content:space-between;"><span>MAISON NOIR</span><span>💳</span></div>
+            <div style="font-size:1.3rem;letter-spacing:2px;" id="cardPreviewNumber">•••• •••• •••• ••••</div>
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;">
+              <span id="cardPreviewName">CARDHOLDER NAME</span><span id="cardPreviewExpiry">MM/YY</span>
+            </div>
+          </div>
+          <div class="field"><label>Card Number</label><input name="cardNumber" maxlength="19" placeholder="4242 4242 4242 4242" required><span class="error"></span></div>
+          <div class="field"><label>Cardholder Name</label><input name="cardName" required><span class="error"></span></div>
+          <div class="field-row">
+            <div class="field"><label>Expiration Date</label><input name="cardExpiry" placeholder="MM/YY" maxlength="5" required><span class="error"></span></div>
+            <div class="field"><label>CVV</label><input name="cardCvv" maxlength="4" placeholder="123" required><span class="error"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cart-summary">
+          <h3 style="margin-bottom:18px;">Order Summary</h3>
+          <div id="checkoutItems" style="max-height:260px;overflow-y:auto;margin-bottom:16px;"></div>
+          <div class="summary-row"><span>Subtotal</span><span class="price" id="coSubtotal">$0.00</span></div>
+          <div class="summary-row" id="coDiscountRow" style="display:none;"><span>Discount</span><span class="price" id="coDiscount">-$0.00</span></div>
+          <div class="summary-row"><span>Shipping</span><span class="price" id="coShipping">$0.00</span></div>
+          <div class="summary-row"><span>Estimated Tax</span><span class="price" id="coTax">$0.00</span></div>
+          <div class="summary-row total"><span>Total</span><span class="price" id="coTotal">$0.00</span></div>
+          <button type="submit" class="btn btn-signal btn-block mt-16" id="placeOrderBtn">Place Order</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+  import "./js/theme.js";
+  import { getCart, cartTotals, clearCart } from "./js/cart.js";
+  import { formatCurrency, toast, validateForm, validators } from "./js/utils.js";
+  import { simulatePayment, createOrder } from "./js/checkout.js";
+
+  const cart = getCart();
+  const couponPercent = parseFloat(sessionStorage.getItem("mn_coupon") || "0");
+
+  if (cart.length === 0) {
+    document.getElementById("checkoutEmpty").classList.remove("hidden");
+    document.getElementById("checkoutForm").classList.add("hidden");
+  } else {
+    document.getElementById("checkoutItems").innerHTML = cart.map((i) => `
+      <div class="flex justify-between gap-12 mt-8" style="font-size:.85rem;">
+        <span>${i.qty} × ${i.name}${i.size ? " (" + i.size + ")" : ""}</span>
+        <span class="price">${formatCurrency(i.price * i.qty)}</span>
+      </div>`).join("");
+    const totals = cartTotals(cart, couponPercent);
+    document.getElementById("coSubtotal").textContent = formatCurrency(totals.subtotal);
+    document.getElementById("coShipping").textContent = totals.shipping === 0 ? "Free" : formatCurrency(totals.shipping);
+    document.getElementById("coTax").textContent = formatCurrency(totals.tax);
+    document.getElementById("coTotal").textContent = formatCurrency(totals.total);
+    if (totals.discount > 0) {
+      document.getElementById("coDiscountRow").style.display = "flex";
+      document.getElementById("coDiscount").textContent = "-" + formatCurrency(totals.discount);
+    }
+  }
+
+  document.querySelectorAll(".pay-method").forEach((btn) => btn.addEventListener("click", () => {
+    document.querySelectorAll(".pay-method").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
+  }));
+
+  const form = document.getElementById("checkoutForm");
+  form.cardNumber?.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 16);
+    e.target.value = v.replace(/(.{4})/g, "$1 ").trim();
+    document.getElementById("cardPreviewNumber").textContent = v.padEnd(16, "•").replace(/(.{4})/g, "$1 ").trim();
+  });
+  form.cardName?.addEventListener("input", (e) => {
+    document.getElementById("cardPreviewName").textContent = e.target.value.toUpperCase() || "CARDHOLDER NAME";
+  });
+  form.cardExpiry?.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (v.length > 2) v = v.slice(0, 2) + "/" + v.slice(2);
+    e.target.value = v;
+    document.getElementById("cardPreviewExpiry").textContent = v || "MM/YY";
+  });
+
+  const rules = {
+    fullName: [validators.required], email: [validators.required, validators.email],
+    phone: [validators.required, validators.phone], address: [validators.required],
+    city: [validators.required], state: [validators.required],
+    postalCode: [validators.required, validators.postal], country: [validators.required],
+    cardNumber: [validators.required, validators.cardNumber],
+    cardName: [validators.required], cardExpiry: [validators.required, validators.cardExpiry],
+    cardCvv: [validators.required, validators.cvv],
+  };
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!validateForm(form, rules)) { toast("Please fix the highlighted fields", "error"); return; }
+    const btn = document.getElementById("placeOrderBtn");
+    btn.disabled = true; btn.textContent = "Processing Payment…";
+
+    const shipping = Object.fromEntries(["fullName", "email", "phone", "address", "city", "state", "postalCode", "country"].map((k) => [k, form[k].value]));
+    const method = document.querySelector(".pay-method.selected").dataset.method;
+
+    try {
+      const paymentResult = await simulatePayment({ cardNumber: form.cardNumber.value });
+      const totals = cartTotals(cart, couponPercent);
+      const order = await createOrder({
+        cart, totals, shipping,
+        payment: { method, cardNumber: form.cardNumber.value, transactionId: paymentResult.transactionId },
+      });
+      clearCart();
+      sessionStorage.setItem("mn_last_order", JSON.stringify(order));
+      location.href = "order-confirmation.html";
+    } catch (err) {
+      toast(err.message, "error");
+      btn.disabled = false; btn.textContent = "Place Order";
+    }
+  });
+</script>
+</body>
+</html>

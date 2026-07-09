@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin: Seed Data — MAISON NOIR</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+  </head>
+  <body>
+    <main class="section-tight">
+      <div class="container" style="max-width: 640px">
+        <h1 class="display-md">Developer: Seed Firestore</h1>
+        <p class="text-muted mt-16">
+          This page is for YOU (the developer), not shoppers - don't link to it
+          from the live site. It writes the demo product catalog into
+          Firestore's <code>products</code> collection, and lets you mint VIP
+          invite codes. Delete this file (or block it) before a public launch,
+          since by default Firestore rules only allow writes here while
+          <em>you</em> are signed in as an admin (see README "Firebase Setup"
+          for the exact rule).
+        </p>
+
+        <div class="order-card mt-24">
+          <h3>1. Sign in as yourself first</h3>
+          <p class="text-muted mt-8" style="font-size: 0.88rem">
+            Use the same account you'll designate as admin in Firestore Security
+            Rules.
+          </p>
+          <div id="authStatus" class="mt-16 text-muted">
+            Checking sign-in status…
+          </div>
+          <a
+            href="login.html?redirect=admin-seed.html"
+            class="btn btn-outline mt-8"
+            id="signinLink"
+            >Sign In</a
+          >
+        </div>
+
+        <div class="order-card mt-24">
+          <h3>2. Seed Products</h3>
+          <p class="text-muted mt-8" style="font-size: 0.88rem">
+            Writes 36 premium products into Firestore. Safe to run multiple
+            times (overwrites by ID).
+          </p>
+          <button class="btn btn-primary mt-16" id="seedProductsBtn">
+            Seed Products to Firestore
+          </button>
+          <div id="seedProductsStatus" class="mt-16"></div>
+        </div>
+
+        <div class="order-card mt-24">
+          <h3>3. Mint a VIP Invite Code</h3>
+          <p class="text-muted mt-8" style="font-size: 0.88rem">
+            Generates a one-time-use code a member can redeem at vip-login.html
+            to unlock VIP access.
+          </p>
+          <button class="btn btn-gold mt-16" id="mintInviteBtn">
+            Generate Invite Code
+          </button>
+          <div id="inviteResult" class="mt-16"></div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      import { auth, db } from "./js/firebase-config.js";
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+      import {
+        doc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+      import { toast, uid } from "./js/utils.js";
+
+      onAuthStateChanged(auth, (user) => {
+        document.getElementById("authStatus").textContent = user
+          ? `Signed in as ${user.email}`
+          : "Not signed in";
+        document
+          .getElementById("signinLink")
+          .classList.toggle("hidden", !!user);
+      });
+
+      // ======================== HELPERS ========================
+      function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+      let skuCounter = 1000;
+
+      function mk({
+        name,
+        brand,
+        gender,
+        category,
+        price,           // final selling price
+        originalPrice,   // optional "was" price; if provided, discount is auto-calculated
+        rating,
+        reviews,
+        stock,
+        mainImage,
+        altImage,
+        galleryImages,
+        sizes,
+        colors,
+        description,
+        specs,
+        tags = [],
+        weight = null,
+        dimensions = null,
+        material = null,
+        fit = null,
+        care = null,
+        season = "All Season",
+        occasion = null,
+        featured = false,
+        bestseller = false,
+        popular = false,
+      }) {
+        const id = name.toLowerCase().replace(/\s+/g, "-");
+        const sku = `MN-${skuCounter++}`;
+        const isNew = Math.random() < 0.25; // 25% chance
+
+        // Auto-calculate discount percentage from originalPrice
+        const discountPercent = originalPrice
+          ? Math.round(((originalPrice - price) / originalPrice) * 100)
+          : 0;
+
+        const finalRating =
+          rating ?? parseFloat((4.2 + Math.random() * 0.7).toFixed(1));
+        const finalReviews = reviews ?? rand(50, 3000);
+        const finalStock = stock ?? rand(5, 40);
+
+        // ----- Normalize colors -----
+        let normalizedColors;
+        if (colors) {
+          // If it's a nested array like [["#hex","name"],...], convert to array of objects
+          if (Array.isArray(colors[0]) && colors[0].length === 2) {
+            normalizedColors = colors.map(([hex, label]) => ({ hex, label }));
+          } else {
+            // Already an array of objects – use as-is
+            normalizedColors = colors;
+          }
+        } else {
+          // Default colors
+          normalizedColors = [
+            ["#1a1a1a", "Black"],
+            ["#c9c3b8", "Bone"],
+            ["#5c4433", "Cognac"],
+          ].map(([hex, label]) => ({ hex, label }));
+        }
+
+        return {
+          id,
+          sku,
+          name,
+          brand,
+          gender,
+          category,
+          price,
+          discount: discountPercent,
+          originalPrice: originalPrice || null,   // explicitly store for UI
+          rating: finalRating,
+          reviews: finalReviews,
+          stock: finalStock,
+          isNew,
+          image:
+            mainImage ||
+            `https://placehold.co/700x900/1a1a1a/f5f5f5?text=${encodeURIComponent(name)}`,
+          imageAlt:
+            altImage ||
+            `https://placehold.co/700x900/2c2c2c/f5f5f5?text=${encodeURIComponent(name + " Alt")}`,
+          gallery: galleryImages?.length
+            ? galleryImages
+            : [1, 2, 3].map(
+                (n) =>
+                  `https://placehold.co/900x1100/1a1a1a/f5f5f5?text=${encodeURIComponent(name + " " + n)}`,
+              ),
+          sizes:
+            sizes ||
+            (category === "footwear"
+              ? ["6", "7", "8", "9", "10", "11"]
+              : ["XS", "S", "M", "L", "XL"]),
+          colors: normalizedColors,
+          description: description || `A ${category} staple from ${brand}.`,
+          specs: specs || [
+            "Material: Premium blend",
+            "Fit: True to size",
+            "Care: See label",
+          ],
+          tags,
+          weight: weight || `${(rand(3, 15) / 10).toFixed(1)} kg`,
+          dimensions:
+            dimensions ||
+            `${rand(20, 60)} × ${rand(20, 60)} × ${rand(5, 20)} cm`,
+          material: material || "Premium Blend",
+          fit: fit || "Regular Fit",
+          care: care || "Machine Wash",
+          season,
+          occasion: occasion || "Casual",
+          featured,
+          bestseller,
+          popular,
+        };
+      }
+
+      // ======================== PRODUCTS ========================
+      const PRODUCTS = [
+        // --- MEN ---
+        mk({
+          name: "Wool Overcoat",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "outerwear",
+          price: 348,
+          originalPrice: null,
+          rating: 4.8,
+          reviews: 812,
+          stock: 12,
+          mainImage: "images/products/wool-overcoat/1.jpg",
+          altImage: "images/products/wool-overcoat/2.jpg",
+          galleryImages: [
+            "images/products/wool-overcoat/1.jpg",
+            "images/products/wool-overcoat/2.jpg",
+            "images/products/wool-overcoat/3.jpg",
+            "images/products/wool-overcoat/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL", "XXL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#3e4a3b", "Olive"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Tailored from a luxurious wool blend, offering warmth and timeless elegance.",
+          specs: [
+            "Material: 80% Wool, 20% Nylon",
+            "Fit: Slim Fit",
+            "Care: Dry Clean",
+            "Made in Italy",
+          ],
+          tags: ["winter", "wool", "coat", "formal"],
+          weight: "1.2 kg",
+          dimensions: "55 × 45 × 15 cm",
+          material: "Wool Blend",
+          fit: "Slim Fit",
+          care: "Dry Clean",
+          season: "Winter",
+          occasion: "Formal",
+          featured: true,
+          bestseller: true,
+        }),
+        mk({
+          name: "Double-Breasted Coat",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "outerwear",
+          price: 399,
+          originalPrice: 443,
+          rating: 4.7,
+          reviews: 654,
+          stock: 9,
+          mainImage: "images/products/double-breasted-coat/1.jpg",
+          altImage: "images/products/double-breasted-coat/2.jpg",
+          galleryImages: [
+            "images/products/double-breasted-coat/1.jpg",
+            "images/products/double-breasted-coat/2.jpg",
+            "images/products/double-breasted-coat/3.jpg",
+            "images/products/double-breasted-coat/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#3e4a3b", "Olive"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Double-breasted silhouette in a premium wool blend for a commanding presence.",
+          specs: [
+            "Material: 90% Wool, 10% Cashmere",
+            "Fit: Regular",
+            "Care: Dry Clean",
+            "Made in UK",
+          ],
+          tags: ["winter", "wool", "coat", "office"],
+          weight: "1.4 kg",
+          material: "Wool-Cashmere Blend",
+          fit: "Regular Fit",
+          care: "Dry Clean",
+          season: "Winter",
+          occasion: "Office",
+          featured: true,
+        }),
+        mk({
+          name: "Leather Biker Jacket",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "outerwear",
+          price: 420,
+          originalPrice: null,
+          rating: 4.9,
+          reviews: 1092,
+          stock: 8,
+          mainImage: "images/products/leather-biker-jacket/1.jpg",
+          altImage: "images/products/leather-biker-jacket/2.jpg",
+          galleryImages: [
+            "images/products/leather-biker-jacket/1.jpg",
+            "images/products/leather-biker-jacket/2.jpg",
+            "images/products/leather-biker-jacket/3.jpg",
+            "images/products/leather-biker-jacket/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#8B4513", "Brown"],
+          ],
+          description:
+            "Genuine leather jacket with an asymmetric zip and rebellious edge.",
+          specs: [
+            "Material: 100% Leather",
+            "Fit: Slim",
+            "Care: Spot Clean",
+            "Lining: Viscose",
+          ],
+          tags: ["leather", "biker", "jacket", "streetwear"],
+          weight: "1.8 kg",
+          material: "Leather",
+          fit: "Slim Fit",
+          care: "Spot Clean",
+          season: "Autumn / Spring",
+          occasion: "Casual",
+          bestseller: true,
+        }),
+        mk({
+          name: "Bomber Jacket",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "outerwear",
+          price: 289,
+          originalPrice: 340,
+          rating: 4.6,
+          reviews: 487,
+          stock: 18,
+          mainImage: "images/products/bomber-jacket/1.jpg",
+          altImage: "images/products/bomber-jacket/2.jpg",
+          galleryImages: [
+            "images/products/bomber-jacket/1.jpg",
+            "images/products/bomber-jacket/2.jpg",
+            "images/products/bomber-jacket/3.jpg",
+            "images/products/bomber-jacket/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#2c3e50", "Navy"],
+            ["#3e4a3b", "Olive"],
+          ],
+          description:
+            "Lightweight nylon bomber with classic rib-knit trims, perfect for transitional weather.",
+          specs: [
+            "Material: Nylon",
+            "Fit: Regular",
+            "Care: Machine Wash",
+            "Made in Japan",
+          ],
+          tags: ["bomber", "nylon", "streetwear", "spring"],
+          material: "Nylon",
+          fit: "Regular Fit",
+          care: "Machine Wash",
+          season: "Spring",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "Selvedge Denim Jacket",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "outerwear",
+          price: 265,
+          originalPrice: null,
+          rating: 4.6,
+          reviews: 421,
+          stock: 20,
+          mainImage: "images/products/selvedge-denim-jacket/1.jpg",
+          altImage: "images/products/selvedge-denim-jacket/2.jpg",
+          galleryImages: [
+            "images/products/selvedge-denim-jacket/1.jpg",
+            "images/products/selvedge-denim-jacket/2.jpg",
+            "images/products/selvedge-denim-jacket/3.jpg",
+            "images/products/selvedge-denim-jacket/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#2a3f5f", "Indigo"],
+            ["#87CEEB", "Light Wash"],
+          ],
+          description:
+            "Authentic selvedge denim jacket that ages beautifully with every wear.",
+          specs: [
+            "Material: 100% Cotton Selvedge",
+            "Fit: Regular",
+            "Care: Hand Wash",
+            "Made in USA",
+          ],
+          tags: ["denim", "jacket", "selvedge", "vintage"],
+          material: "Selvedge Denim",
+          fit: "Regular Fit",
+          care: "Hand Wash",
+          season: "All Season",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "Puffer Jacket",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "outerwear",
+          price: 315,
+          originalPrice: 332,
+          rating: 4.8,
+          reviews: 560,
+          stock: 16,
+          mainImage: "images/products/puffer-jacket/1.jpg",
+          altImage: "images/products/puffer-jacket/2.jpg",
+          galleryImages: [
+            "images/products/puffer-jacket/1.jpg",
+            "images/products/puffer-jacket/2.jpg",
+            "images/products/puffer-jacket/3.jpg",
+            "images/products/puffer-jacket/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL", "XXL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#2c3e50", "Navy"],
+            ["#c3b091", "Cognac"],
+          ],
+          description:
+            "Down-filled puffer that locks in warmth without sacrificing style.",
+          specs: [
+            "Fill: 90% Down, 10% Feather",
+            "Fit: Regular",
+            "Care: Machine Wash",
+            "Water Resistant",
+          ],
+          tags: ["puffer", "down", "winter", "warm"],
+          material: "Polyester / Down",
+          fit: "Regular Fit",
+          care: "Machine Wash",
+          season: "Winter",
+          occasion: "Travel",
+        }),
+        mk({
+          name: "Premium Crew Neck Tee",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "tops",
+          price: 65,
+          originalPrice: null,
+          rating: 4.5,
+          reviews: 962,
+          stock: 54,
+          mainImage: "images/products/premium-crew-neck-tee/1.jpg",
+          altImage: "images/products/premium-crew-neck-tee/2.jpg",
+          galleryImages: [
+            "images/products/premium-crew-neck-tee/1.jpg",
+            "images/products/premium-crew-neck-tee/2.jpg",
+            "images/products/premium-crew-neck-tee/3.jpg",
+            "images/products/premium-crew-neck-tee/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [
+            ["#ffffff", "White"],
+            ["#1a1a1a", "Black"],
+            ["#808080", "Grey"],
+          ],
+          description: "Everyday crew neck tee in heavy-weight organic cotton.",
+          specs: [
+            "Material: 100% Organic Cotton",
+            "Fit: Regular",
+            "Care: Machine Wash",
+            "Made in Portugal",
+          ],
+          tags: ["tee", "cotton", "basics", "everyday"],
+          material: "Organic Cotton",
+          fit: "Regular Fit",
+          care: "Machine Wash",
+          season: "All Season",
+          occasion: "Casual",
+          popular: true,
+        }),
+        mk({
+          name: "Oxford Cotton Shirt",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "shirts",
+          price: 115,
+          originalPrice: 128,
+          rating: 4.7,
+          reviews: 715,
+          stock: 28,
+          mainImage: "images/products/oxford-cotton-shirt/1.jpg",
+          altImage: "images/products/oxford-cotton-shirt/2.jpg",
+          galleryImages: [
+            "images/products/oxford-cotton-shirt/1.jpg",
+            "images/products/oxford-cotton-shirt/2.jpg",
+            "images/products/oxford-cotton-shirt/3.jpg",
+            "images/products/oxford-cotton-shirt/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL"],
+          colors: [
+            ["#ffffff", "White"],
+            ["#87CEEB", "Light Blue"],
+            ["#1a1a1a", "Black"],
+          ],
+          description:
+            "A crisp Oxford shirt with a button-down collar, suitable for both office and weekend.",
+          specs: [
+            "Material: 100% Cotton",
+            "Fit: Slim Fit",
+            "Care: Machine Wash",
+            "Made in Turkey",
+          ],
+          tags: ["shirt", "oxford", "cotton", "office"],
+          material: "Cotton",
+          fit: "Slim Fit",
+          care: "Machine Wash",
+          season: "All Season",
+          occasion: "Office",
+        }),
+        mk({
+          name: "Cashmere Sweater",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "knitwear",
+          price: 185,
+          originalPrice: null,
+          rating: 4.9,
+          reviews: 884,
+          stock: 14,
+          mainImage: "images/products/cashmere-sweater/1.jpg",
+          altImage: "images/products/cashmere-sweater/2.jpg",
+          galleryImages: [
+            "images/products/cashmere-sweater/1.jpg",
+            "images/products/cashmere-sweater/2.jpg",
+            "images/products/cashmere-sweater/3.jpg",
+            "images/products/cashmere-sweater/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#808080", "Grey"],
+            ["#c3b091", "Cognac"],
+          ],
+          description:
+            "Luxuriously soft cashmere crew neck, perfect for layering or solo wear.",
+          specs: [
+            "Material: 100% Cashmere",
+            "Fit: Regular",
+            "Care: Hand Wash / Dry Clean",
+            "Made in Scotland",
+          ],
+          tags: ["cashmere", "sweater", "luxury", "knitwear"],
+          material: "Cashmere",
+          fit: "Regular Fit",
+          care: "Hand Wash",
+          season: "Winter",
+          occasion: "Casual / Office",
+          featured: true,
+          bestseller: true,
+        }),
+        mk({
+          name: "Zip Hoodie",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "hoodies",
+          price: 95,
+          originalPrice: 119,
+          rating: 4.5,
+          reviews: 530,
+          stock: 35,
+          mainImage: "images/products/zip-hoodie/1.jpg",
+          altImage: "images/products/zip-hoodie/2.jpg",
+          galleryImages: [
+            "images/products/zip-hoodie/1.jpg",
+            "images/products/zip-hoodie/2.jpg",
+            "images/products/zip-hoodie/3.jpg",
+            "images/products/zip-hoodie/4.jpg",
+          ],
+          sizes: ["S", "M", "L", "XL", "XXL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#808080", "Grey"],
+            ["#3e4a3b", "Olive"],
+          ],
+          description:
+            "Heavyweight cotton zip hoodie with a brushed fleece interior for cozy comfort.",
+          specs: [
+            "Material: 80% Cotton, 20% Polyester",
+            "Fit: Oversized",
+            "Care: Machine Wash",
+            "Made in Canada",
+          ],
+          tags: ["hoodie", "zip", "cotton", "streetwear"],
+          material: "Cotton Blend",
+          fit: "Oversized Fit",
+          care: "Machine Wash",
+          season: "Autumn / Winter",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "Tailored Trousers",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "bottoms",
+          price: 145,
+          originalPrice: 161,
+          rating: 4.3,
+          reviews: 210,
+          stock: 30,
+          mainImage: "images/products/tailored-trousers/1.jpg",
+          altImage: "images/products/tailored-trousers/2.jpg",
+          galleryImages: [
+            "images/products/tailored-trousers/1.jpg",
+            "images/products/tailored-trousers/2.jpg",
+            "images/products/tailored-trousers/3.jpg",
+            "images/products/tailored-trousers/4.jpg",
+          ],
+          sizes: ["28", "30", "32", "34", "36", "38"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#808080", "Grey"],
+            ["#d2b48c", "Beige"],
+          ],
+          description:
+            "Sharp tailored trousers in a wool blend with a modern slim cut.",
+          specs: [
+            "Material: 70% Wool, 30% Polyester",
+            "Fit: Slim",
+            "Care: Dry Clean",
+            "Made in Italy",
+          ],
+          tags: ["trousers", "wool", "tailored", "office"],
+          material: "Wool Blend",
+          fit: "Slim Fit",
+          care: "Dry Clean",
+          season: "All Season",
+          occasion: "Office",
+        }),
+        mk({
+          name: "Slim Fit Chinos",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "bottoms",
+          price: 135,
+          originalPrice: 159,
+          rating: 4.6,
+          reviews: 441,
+          stock: 24,
+          mainImage: "images/products/slim-fit-chinos/1.jpg",
+          altImage: "images/products/slim-fit-chinos/2.jpg",
+          galleryImages: [
+            "images/products/slim-fit-chinos/1.jpg",
+            "images/products/slim-fit-chinos/2.jpg",
+            "images/products/slim-fit-chinos/3.jpg",
+            "images/products/slim-fit-chinos/4.jpg",
+          ],
+          sizes: ["28", "30", "32", "34", "36"],
+          colors: [
+            ["#d2b48c", "Beige"],
+            ["#1a1a1a", "Black"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Stretch-cotton chinos with a slim leg, ideal for smart-casual dressing.",
+          specs: [
+            "Material: 98% Cotton, 2% Elastane",
+            "Fit: Slim",
+            "Care: Machine Wash",
+            "Made in Spain",
+          ],
+          tags: ["chinos", "cotton", "slim", "smart casual"],
+          material: "Cotton / Elastane",
+          fit: "Slim Fit",
+          care: "Machine Wash",
+          season: "Spring / Summer",
+          occasion: "Smart Casual",
+        }),
+        mk({
+          name: "Relaxed Fit Jeans",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "bottoms",
+          price: 155,
+          originalPrice: null,
+          rating: 4.7,
+          reviews: 625,
+          stock: 26,
+          mainImage: "images/products/relaxed-fit-jeans/1.jpg",
+          altImage: "images/products/relaxed-fit-jeans/2.jpg",
+          galleryImages: [
+            "images/products/relaxed-fit-jeans/1.jpg",
+            "images/products/relaxed-fit-jeans/2.jpg",
+            "images/products/relaxed-fit-jeans/3.jpg",
+            "images/products/relaxed-fit-jeans/4.jpg",
+          ],
+          sizes: ["30", "32", "34", "36", "38"],
+          colors: [
+            ["#87CEEB", "Light Wash"],
+            ["#1a1a1a", "Black"],
+            ["#2a3f5f", "Dark Wash"],
+          ],
+          description:
+            "Classic five-pocket jeans with a relaxed straight leg and vintage feel.",
+          specs: [
+            "Material: 100% Cotton Denim",
+            "Fit: Relaxed",
+            "Care: Machine Wash",
+            "Made in Japan",
+          ],
+          tags: ["jeans", "denim", "relaxed", "vintage"],
+          material: "Denim",
+          fit: "Relaxed Fit",
+          care: "Machine Wash",
+          season: "All Season",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "Cargo Pants",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "bottoms",
+          price: 145,
+          originalPrice: 161,
+          rating: 4.5,
+          reviews: 318,
+          stock: 32,
+          mainImage: "images/products/cargo-pants/1.jpg",
+          altImage: "images/products/cargo-pants/2.jpg",
+          galleryImages: [
+            "images/products/cargo-pants/1.jpg",
+            "images/products/cargo-pants/2.jpg",
+            "images/products/cargo-pants/3.jpg",
+            "images/products/cargo-pants/4.jpg",
+          ],
+          sizes: ["30", "32", "34", "36"],
+          colors: [
+            ["#3e4a3b", "Olive"],
+            ["#1a1a1a", "Black"],
+            ["#d2b48c", "Beige"],
+          ],
+          description:
+            "Durable cotton cargo pants with large flap pockets and a comfortable fit.",
+          specs: [
+            "Material: 100% Cotton",
+            "Fit: Regular",
+            "Care: Machine Wash",
+            "Made in USA",
+          ],
+          tags: ["cargo", "cotton", "utility", "streetwear"],
+          material: "Cotton",
+          fit: "Regular Fit",
+          care: "Machine Wash",
+          season: "Spring / Autumn",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "Leather Chelsea Boots",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "footwear",
+          price: 320,
+          originalPrice: null,
+          rating: 4.9,
+          reviews: 640,
+          stock: 9,
+          mainImage: "images/products/leather-chelsea-boots/1.jpg",
+          altImage: "images/products/leather-chelsea-boots/2.jpg",
+          galleryImages: [
+            "images/products/leather-chelsea-boots/1.jpg",
+            "images/products/leather-chelsea-boots/2.jpg",
+            "images/products/leather-chelsea-boots/3.jpg",
+            "images/products/leather-chelsea-boots/4.jpg",
+          ],
+          sizes: ["7", "8", "9", "10", "11"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#8B4513", "Brown"],
+            ["#D2B48C", "Tan"],
+          ],
+          description:
+            "Crafted from premium leather with a sleek Chelsea silhouette for effortless everyday wear.",
+          specs: [
+            "Upper: Genuine Leather",
+            "Sole: Rubber",
+            "Closure: Slip-on",
+            "Made in Italy",
+          ],
+          tags: ["boots", "chelsea", "leather", "footwear"],
+          material: "Leather",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "All Season",
+          occasion: "Smart Casual",
+          featured: true,
+          bestseller: true,
+        }),
+        mk({
+          name: "Suede Loafers",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "footwear",
+          price: 245,
+          originalPrice: null,
+          rating: 4.6,
+          reviews: 388,
+          stock: 14,
+          mainImage: "images/products/suede-loafers/1.jpg",
+          altImage: "images/products/suede-loafers/2.jpg",
+          galleryImages: [
+            "images/products/suede-loafers/1.jpg",
+            "images/products/suede-loafers/2.jpg",
+            "images/products/suede-loafers/3.jpg",
+            "images/products/suede-loafers/4.jpg",
+          ],
+          sizes: ["7", "8", "9", "10", "11"],
+          colors: [
+            ["#8B4513", "Brown"],
+            ["#D2B48C", "Tan"],
+            ["#1a1a1a", "Black"],
+          ],
+          description:
+            "Buttery suede loafers with a horsebit detail, bridging smart and casual.",
+          specs: [
+            "Upper: Suede",
+            "Sole: Leather",
+            "Closure: Slip-on",
+            "Made in Spain",
+          ],
+          tags: ["loafers", "suede", "footwear", "smart casual"],
+          material: "Suede",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "Summer",
+          occasion: "Smart Casual",
+          featured: true,
+        }),
+        mk({
+          name: "White Leather Sneakers",
+          brand: "MAISON NOIR",
+          gender: "men",
+          category: "footwear",
+          price: 220,
+          originalPrice: 232,
+          rating: 4.8,
+          reviews: 571,
+          stock: 22,
+          mainImage: "images/products/white-leather-sneakers/1.jpg",
+          altImage: "images/products/white-leather-sneakers/2.jpg",
+          galleryImages: [
+            "images/products/white-leather-sneakers/1.jpg",
+            "images/products/white-leather-sneakers/2.jpg",
+            "images/products/white-leather-sneakers/3.jpg",
+            "images/products/white-leather-sneakers/4.jpg",
+          ],
+          sizes: ["6", "7", "8", "9", "10", "11"],
+          colors: [
+            ["#ffffff", "White"],
+            ["#1a1a1a", "Black"],
+          ],
+          description:
+            "Minimalist leather sneakers that elevate any outfit, hand-stitched for durability.",
+          specs: [
+            "Upper: Leather",
+            "Sole: Rubber",
+            "Lining: Leather",
+            "Made in Portugal",
+          ],
+          tags: ["sneakers", "leather", "white", "minimal"],
+          material: "Leather",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "All Season",
+          occasion: "Casual",
+          popular: true,
+        }),
+        mk({
+          name: "High-Top Sneakers",
+          brand: "Foundry Co.",
+          gender: "men",
+          category: "footwear",
+          price: 235,
+          originalPrice: 276,
+          rating: 4.5,
+          reviews: 297,
+          stock: 19,
+          mainImage: "images/products/high-top-sneakers/1.jpg",
+          altImage: "images/products/high-top-sneakers/2.jpg",
+          galleryImages: [
+            "images/products/high-top-sneakers/1.jpg",
+            "images/products/high-top-sneakers/2.jpg",
+            "images/products/high-top-sneakers/3.jpg",
+            "images/products/high-top-sneakers/4.jpg",
+          ],
+          sizes: ["7", "8", "9", "10", "11"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#ffffff", "White"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Canvas high-tops with a padded collar and vulcanized sole for a retro vibe.",
+          specs: [
+            "Upper: Canvas",
+            "Sole: Vulcanized Rubber",
+            "Closure: Lace-up",
+            "Made in China",
+          ],
+          tags: ["sneakers", "high-top", "canvas", "streetwear"],
+          material: "Canvas",
+          fit: "True to Size",
+          care: "Machine Wash",
+          season: "Spring / Summer",
+          occasion: "Casual",
+        }),
+
+        // ======================== WOMEN ========================
+        mk({
+          name: "Silk Slip Dress",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "dresses",
+          price: 210,
+          originalPrice: 247,
+          rating: 4.5,
+          reviews: 356,
+          stock: 8,
+          mainImage: "images/products/silk-slip-dress/1.jpg",
+          altImage: "images/products/silk-slip-dress/2.jpg",
+          galleryImages: [
+            "images/products/silk-slip-dress/1.jpg",
+            "images/products/silk-slip-dress/2.jpg",
+            "images/products/silk-slip-dress/3.jpg",
+            "images/products/silk-slip-dress/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#f5f5dc", "Ivory"],
+            ["#800020", "Burgundy"],
+          ],
+          description:
+            "Cut from smooth satin with a fluid silhouette for evening occasions.",
+          specs: [
+            "Material: Satin",
+            "Lining: Polyester",
+            "Neckline: V-neck",
+            "Dry Clean",
+          ],
+          tags: ["dress", "silk", "evening", "luxury"],
+          material: "Satin",
+          fit: "Slim Fit",
+          care: "Dry Clean",
+          season: "All Season",
+          occasion: "Party",
+          featured: true,
+          bestseller: true,
+        }),
+        mk({
+          name: "Satin Evening Dress",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "dresses",
+          price: 330,
+          originalPrice: null,
+          rating: 4.9,
+          reviews: 514,
+          stock: 12,
+          mainImage: "images/products/satin-evening-dress/1.jpg",
+          altImage: "images/products/satin-evening-dress/2.jpg",
+          galleryImages: [
+            "images/products/satin-evening-dress/1.jpg",
+            "images/products/satin-evening-dress/2.jpg",
+            "images/products/satin-evening-dress/3.jpg",
+            "images/products/satin-evening-dress/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#800020", "Burgundy"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Floor-length satin gown with a cowl back, designed to mesmerize.",
+          specs: [
+            "Material: Silk Satin",
+            "Lining: Silk",
+            "Closure: Hidden Zip",
+            "Dry Clean",
+          ],
+          tags: ["evening", "gown", "satin", "formal"],
+          material: "Silk Satin",
+          fit: "Regular Fit",
+          care: "Dry Clean",
+          season: "All Season",
+          occasion: "Formal",
+        }),
+        mk({
+          name: "Floral Midi Dress",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "dresses",
+          price: 185,
+          originalPrice: 231,
+          rating: 4.6,
+          reviews: 402,
+          stock: 18,
+          mainImage: "images/products/floral-midi-dress/1.jpg",
+          altImage: "images/products/floral-midi-dress/2.jpg",
+          galleryImages: [
+            "images/products/floral-midi-dress/1.jpg",
+            "images/products/floral-midi-dress/2.jpg",
+            "images/products/floral-midi-dress/3.jpg",
+            "images/products/floral-midi-dress/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#f5f5dc", "Ivory"],
+            ["#ffb6c1", "Blush"],
+            ["#87CEEB", "Sky Blue"],
+          ],
+          description:
+            "Romantic floral print on a lightweight chiffon midi dress with ruffled hem.",
+          specs: [
+            "Material: Chiffon",
+            "Lining: Polyester",
+            "Closure: Side Zip",
+            "Hand Wash",
+          ],
+          tags: ["floral", "midi", "dress", "spring"],
+          material: "Chiffon",
+          fit: "Regular Fit",
+          care: "Hand Wash",
+          season: "Spring / Summer",
+          occasion: "Casual / Party",
+        }),
+        mk({
+          name: "Bodycon Knit Dress",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "dresses",
+          price: 245,
+          originalPrice: 272,
+          rating: 4.8,
+          reviews: 493,
+          stock: 14,
+          mainImage: "images/products/bodycon-knit-dress/1.jpg",
+          altImage: "images/products/bodycon-knit-dress/2.jpg",
+          galleryImages: [
+            "images/products/bodycon-knit-dress/1.jpg",
+            "images/products/bodycon-knit-dress/2.jpg",
+            "images/products/bodycon-knit-dress/3.jpg",
+            "images/products/bodycon-knit-dress/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#800020", "Burgundy"],
+            ["#c3b091", "Cognac"],
+          ],
+          description:
+            "Second-skin knit dress that hugs curves, made from a soft wool blend.",
+          specs: [
+            "Material: 70% Wool, 30% Viscose",
+            "Fit: Bodycon",
+            "Care: Hand Wash",
+            "Made in France",
+          ],
+          tags: ["bodycon", "knit", "dress", "evening"],
+          material: "Wool Blend",
+          fit: "Bodycon Fit",
+          care: "Hand Wash",
+          season: "Autumn / Winter",
+          occasion: "Party",
+        }),
+        mk({
+          name: "Oversized Blazer",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "outerwear",
+          price: 289,
+          originalPrice: null,
+          rating: 4.6,
+          reviews: 245,
+          stock: 11,
+          mainImage: "images/products/oversized-blazer/1.jpg",
+          altImage: "images/products/oversized-blazer/2.jpg",
+          galleryImages: [
+            "images/products/oversized-blazer/1.jpg",
+            "images/products/oversized-blazer/2.jpg",
+            "images/products/oversized-blazer/3.jpg",
+            "images/products/oversized-blazer/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#ffffff", "White"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Relaxed oversized blazer with strong shoulders and a single button closure.",
+          specs: [
+            "Material: 65% Polyester, 35% Viscose",
+            "Fit: Oversized",
+            "Care: Dry Clean",
+            "Made in Korea",
+          ],
+          tags: ["blazer", "oversized", "workwear", "fashion"],
+          material: "Polyester Blend",
+          fit: "Oversized Fit",
+          care: "Dry Clean",
+          season: "All Season",
+          occasion: "Office / Casual",
+        }),
+        mk({
+          name: "Trench Coat",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "outerwear",
+          price: 310,
+          originalPrice: null,
+          rating: 4.8,
+          reviews: 470,
+          stock: 7,
+          mainImage: "images/products/trench-coat/1.jpg",
+          altImage: "images/products/trench-coat/2.jpg",
+          galleryImages: [
+            "images/products/trench-coat/1.jpg",
+            "images/products/trench-coat/2.jpg",
+            "images/products/trench-coat/3.jpg",
+            "images/products/trench-coat/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#d2b48c", "Beige"],
+            ["#1a1a1a", "Black"],
+            ["#2c3e50", "Navy"],
+          ],
+          description:
+            "Iconic double-breasted trench in water-resistant cotton gabardine.",
+          specs: [
+            "Material: Cotton Gabardine",
+            "Lining: Checked Cotton",
+            "Closure: Belted",
+            "Water Resistant",
+          ],
+          tags: ["trench", "coat", "classic", "spring"],
+          material: "Cotton",
+          fit: "Regular Fit",
+          care: "Dry Clean",
+          season: "Spring / Autumn",
+          occasion: "Office / Travel",
+          featured: true,
+        }),
+        mk({
+          name: "Long Wool Coat",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "outerwear",
+          price: 385,
+          originalPrice: 405,
+          rating: 4.9,
+          reviews: 621,
+          stock: 10,
+          mainImage: "images/products/long-wool-coat/1.jpg",
+          altImage: "images/products/long-wool-coat/2.jpg",
+          galleryImages: [
+            "images/products/long-wool-coat/1.jpg",
+            "images/products/long-wool-coat/2.jpg",
+            "images/products/long-wool-coat/3.jpg",
+            "images/products/long-wool-coat/4.jpg",
+          ],
+          sizes: ["S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#c3b091", "Cognac"],
+            ["#d2b48c", "Beige"],
+          ],
+          description:
+            "Elegant knee-length wool coat with a notched lapel and smooth lining.",
+          specs: [
+            "Material: 100% Virgin Wool",
+            "Lining: Viscose",
+            "Fit: Regular",
+            "Dry Clean",
+          ],
+          tags: ["wool", "coat", "long", "winter"],
+          material: "Virgin Wool",
+          fit: "Regular Fit",
+          care: "Dry Clean",
+          season: "Winter",
+          occasion: "Formal",
+          bestseller: true,
+        }),
+        mk({
+          name: "Cropped Leather Jacket",
+          brand: "Foundry Co.",
+          gender: "women",
+          category: "outerwear",
+          price: 355,
+          originalPrice: null,
+          rating: 4.8,
+          reviews: 468,
+          stock: 9,
+          mainImage: "images/products/cropped-leather-jacket/1.jpg",
+          altImage: "images/products/cropped-leather-jacket/2.jpg",
+          galleryImages: [
+            "images/products/cropped-leather-jacket/1.jpg",
+            "images/products/cropped-leather-jacket/2.jpg",
+            "images/products/cropped-leather-jacket/3.jpg",
+            "images/products/cropped-leather-jacket/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#8B4513", "Brown"],
+          ],
+          description:
+            "Edgy cropped leather jacket with silver zips and a boxy silhouette.",
+          specs: [
+            "Material: 100% Lambskin Leather",
+            "Lining: Polyester",
+            "Fit: Boxy",
+            "Spot Clean",
+          ],
+          tags: ["leather", "jacket", "crop", "biker"],
+          material: "Lambskin Leather",
+          fit: "Boxy Fit",
+          care: "Spot Clean",
+          season: "Autumn / Spring",
+          occasion: "Casual / Party",
+        }),
+        mk({
+          name: "Cashmere Turtleneck",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "knitwear",
+          price: 190,
+          originalPrice: null,
+          rating: 4.8,
+          reviews: 903,
+          stock: 15,
+          mainImage: "images/products/cashmere-turtleneck/1.jpg",
+          altImage: "images/products/cashmere-turtleneck/2.jpg",
+          galleryImages: [
+            "images/products/cashmere-turtleneck/1.jpg",
+            "images/products/cashmere-turtleneck/2.jpg",
+            "images/products/cashmere-turtleneck/3.jpg",
+            "images/products/cashmere-turtleneck/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#808080", "Grey"],
+            ["#f5f5dc", "Ivory"],
+          ],
+          description:
+            "A classic fine-knit cashmere turtleneck that combines warmth and elegance.",
+          specs: [
+            "Material: 100% Cashmere",
+            "Fit: Slim",
+            "Care: Hand Wash",
+            "Made in Scotland",
+          ],
+          tags: ["cashmere", "turtleneck", "knitwear", "luxury"],
+          material: "Cashmere",
+          fit: "Slim Fit",
+          care: "Hand Wash",
+          season: "Winter",
+          occasion: "Casual / Office",
+          popular: true,
+          bestseller: true,
+        }),
+        mk({
+          name: "Satin Blouse",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "tops",
+          price: 135,
+          originalPrice: 150,
+          rating: 4.7,
+          reviews: 332,
+          stock: 26,
+          mainImage: "images/products/satin-blouse/1.jpg",
+          altImage: "images/products/satin-blouse/2.jpg",
+          galleryImages: [
+            "images/products/satin-blouse/1.jpg",
+            "images/products/satin-blouse/2.jpg",
+            "images/products/satin-blouse/3.jpg",
+            "images/products/satin-blouse/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [
+            ["#ffffff", "White"],
+            ["#1a1a1a", "Black"],
+            ["#ffb6c1", "Blush"],
+          ],
+          description:
+            "Fluid satin blouse with a relaxed fit and mother-of-pearl buttons.",
+          specs: [
+            "Material: Satin",
+            "Fit: Relaxed",
+            "Care: Hand Wash",
+            "Made in Italy",
+          ],
+          tags: ["blouse", "satin", "office", "elegant"],
+          material: "Satin",
+          fit: "Relaxed Fit",
+          care: "Hand Wash",
+          season: "All Season",
+          occasion: "Office / Smart Casual",
+        }),
+        mk({
+          name: "Ribbed Tank Top",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "tops",
+          price: 58,
+          originalPrice: 68,
+          rating: 4.5,
+          reviews: 780,
+          stock: 42,
+          mainImage: "images/products/ribbed-tank-top/1.jpg",
+          altImage: "images/products/ribbed-tank-top/2.jpg",
+          galleryImages: [
+            "images/products/ribbed-tank-top/1.jpg",
+            "images/products/ribbed-tank-top/2.jpg",
+            "images/products/ribbed-tank-top/3.jpg",
+            "images/products/ribbed-tank-top/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#ffffff", "White"],
+            ["#808080", "Grey"],
+          ],
+          description:
+            "Stretchy ribbed tank with a flattering high neck, ideal for layering.",
+          specs: [
+            "Material: 95% Cotton, 5% Elastane",
+            "Fit: Slim",
+            "Care: Machine Wash",
+            "Made in Turkey",
+          ],
+          tags: ["tank", "ribbed", "basic", "summer"],
+          material: "Cotton / Elastane",
+          fit: "Slim Fit",
+          care: "Machine Wash",
+          season: "Summer",
+          occasion: "Casual",
+          popular: true,
+        }),
+        mk({
+          name: "Knit Cardigan",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "knitwear",
+          price: 155,
+          originalPrice: null,
+          rating: 4.8,
+          reviews: 452,
+          stock: 18,
+          mainImage: "images/products/knit-cardigan/1.jpg",
+          altImage: "images/products/knit-cardigan/2.jpg",
+          galleryImages: [
+            "images/products/knit-cardigan/1.jpg",
+            "images/products/knit-cardigan/2.jpg",
+            "images/products/knit-cardigan/3.jpg",
+            "images/products/knit-cardigan/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#f5f5dc", "Ivory"],
+            ["#1a1a1a", "Black"],
+            ["#c3b091", "Cognac"],
+          ],
+          description:
+            "Chunky knit cardigan with wooden buttons, perfect for cozy layering.",
+          specs: [
+            "Material: 100% Merino Wool",
+            "Fit: Oversized",
+            "Care: Hand Wash",
+            "Made in Ireland",
+          ],
+          tags: ["cardigan", "knit", "wool", "cozy"],
+          material: "Merino Wool",
+          fit: "Oversized Fit",
+          care: "Hand Wash",
+          season: "Autumn / Winter",
+          occasion: "Casual",
+        }),
+        mk({
+          name: "High-Rise Straight Jeans",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "bottoms",
+          price: 158,
+          originalPrice: null,
+          rating: 4.7,
+          reviews: 512,
+          stock: 33,
+          mainImage: "images/products/high-rise-straight-jeans/1.jpg",
+          altImage: "images/products/high-rise-straight-jeans/2.jpg",
+          galleryImages: [
+            "images/products/high-rise-straight-jeans/1.jpg",
+            "images/products/high-rise-straight-jeans/2.jpg",
+            "images/products/high-rise-straight-jeans/3.jpg",
+            "images/products/high-rise-straight-jeans/4.jpg",
+          ],
+          sizes: ["24", "25", "26", "27", "28", "29", "30"],
+          colors: [
+            ["#87CEEB", "Light Blue"],
+            ["#2a3f5f", "Dark Wash"],
+            ["#1a1a1a", "Black"],
+          ],
+          description:
+            "Retro high-rise jeans with a straight leg and zero-stretch authentic denim.",
+          specs: [
+            "Material: 100% Cotton Denim",
+            'Rise: High (11.5")',
+            "Care: Machine Wash",
+            "Made in USA",
+          ],
+          tags: ["jeans", "high-rise", "denim", "vintage"],
+          material: "Denim",
+          fit: "Straight Fit",
+          care: "Machine Wash",
+          season: "All Season",
+          occasion: "Casual",
+          featured: true,
+        }),
+        mk({
+          name: "Wide Leg Trousers",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "bottoms",
+          price: 170,
+          originalPrice: 189,
+          rating: 4.6,
+          reviews: 287,
+          stock: 20,
+          mainImage: "images/products/wide-leg-trousers/1.jpg",
+          altImage: "images/products/wide-leg-trousers/2.jpg",
+          galleryImages: [
+            "images/products/wide-leg-trousers/1.jpg",
+            "images/products/wide-leg-trousers/2.jpg",
+            "images/products/wide-leg-trousers/3.jpg",
+            "images/products/wide-leg-trousers/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#ffffff", "White"],
+            ["#d2b48c", "Beige"],
+          ],
+          description:
+            "Flowy wide-leg trousers with a high paperbag waist and self-tie belt.",
+          specs: [
+            "Material: 100% Tencel",
+            "Fit: Wide Leg",
+            "Care: Machine Wash",
+            "Made in India",
+          ],
+          tags: ["trousers", "wide-leg", "flowy", "office"],
+          material: "Tencel",
+          fit: "Wide Leg Fit",
+          care: "Machine Wash",
+          season: "Summer",
+          occasion: "Office / Holiday",
+        }),
+        mk({
+          name: "Pleated Midi Skirt",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "bottoms",
+          price: 145,
+          originalPrice: 171,
+          rating: 4.5,
+          reviews: 264,
+          stock: 22,
+          mainImage: "images/products/pleated-midi-skirt/1.jpg",
+          altImage: "images/products/pleated-midi-skirt/2.jpg",
+          galleryImages: [
+            "images/products/pleated-midi-skirt/1.jpg",
+            "images/products/pleated-midi-skirt/2.jpg",
+            "images/products/pleated-midi-skirt/3.jpg",
+            "images/products/pleated-midi-skirt/4.jpg",
+          ],
+          sizes: ["XS", "S", "M", "L"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#f5f5dc", "Ivory"],
+            ["#ffb6c1", "Blush"],
+          ],
+          description:
+            "Accordion-pleated midi skirt that moves beautifully with every step.",
+          specs: [
+            "Material: Polyester Chiffon",
+            "Lining: Polyester",
+            "Closure: Elastic Waist",
+            "Hand Wash",
+          ],
+          tags: ["skirt", "pleated", "midi", "feminine"],
+          material: "Polyester",
+          fit: "Regular Fit",
+          care: "Hand Wash",
+          season: "Spring / Summer",
+          occasion: "Party",
+        }),
+        mk({
+          name: "Leather Ankle Boots",
+          brand: "Foundry Co.",
+          gender: "women",
+          category: "footwear",
+          price: 285,
+          originalPrice: null,
+          rating: 4.9,
+          reviews: 374,
+          stock: 12,
+          mainImage: "images/products/leather-ankle-boots/1.jpg",
+          altImage: "images/products/leather-ankle-boots/2.jpg",
+          galleryImages: [
+            "images/products/leather-ankle-boots/1.jpg",
+            "images/products/leather-ankle-boots/2.jpg",
+            "images/products/leather-ankle-boots/3.jpg",
+            "images/products/leather-ankle-boots/4.jpg",
+          ],
+          sizes: ["36", "37", "38", "39", "40"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#8B4513", "Brown"],
+          ],
+          description:
+            "Sleek leather ankle boots with a block heel and side zip for a polished look.",
+          specs: [
+            "Upper: Leather",
+            "Sole: Rubber",
+            "Heel: 6 cm",
+            "Made in Italy",
+          ],
+          tags: ["boots", "ankle", "leather", "heel"],
+          material: "Leather",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "Autumn / Winter",
+          occasion: "Smart Casual",
+          featured: true,
+        }),
+        mk({
+          name: "Minimal Leather Heels",
+          brand: "MAISON NOIR",
+          gender: "women",
+          category: "footwear",
+          price: 260,
+          originalPrice: 274,
+          rating: 4.8,
+          reviews: 391,
+          stock: 15,
+          mainImage: "images/products/minimal-leather-heels/1.jpg",
+          altImage: "images/products/minimal-leather-heels/2.jpg",
+          galleryImages: [
+            "images/products/minimal-leather-heels/1.jpg",
+            "images/products/minimal-leather-heels/2.jpg",
+            "images/products/minimal-leather-heels/3.jpg",
+            "images/products/minimal-leather-heels/4.jpg",
+          ],
+          sizes: ["36", "37", "38", "39", "40"],
+          colors: [
+            ["#1a1a1a", "Black"],
+            ["#f5f5dc", "Ivory"],
+            ["#d2b48c", "Tan"],
+          ],
+          description:
+            "Timeless pointed-toe pumps in supple leather with a comfortable kitten heel.",
+          specs: [
+            "Upper: 100% Calf Leather",
+            "Sole: Leather",
+            "Heel: 5 cm",
+            "Made in Spain",
+          ],
+          tags: ["heels", "pumps", "leather", "office"],
+          material: "Calf Leather",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "All Season",
+          occasion: "Office / Formal",
+        }),
+        mk({
+          name: "Classic White Sneakers",
+          brand: "Atelier Rue",
+          gender: "women",
+          category: "footwear",
+          price: 210,
+          originalPrice: 233,
+          rating: 4.7,
+          reviews: 628,
+          stock: 24,
+          mainImage: "images/products/classic-white-sneakers/1.jpg",
+          altImage: "images/products/classic-white-sneakers/2.jpg",
+          galleryImages: [
+            "images/products/classic-white-sneakers/1.jpg",
+            "images/products/classic-white-sneakers/2.jpg",
+            "images/products/classic-white-sneakers/3.jpg",
+            "images/products/classic-white-sneakers/4.jpg",
+          ],
+          sizes: ["36", "37", "38", "39", "40", "41"],
+          colors: [
+            ["#ffffff", "White"],
+            ["#1a1a1a", "Black"],
+          ],
+          description:
+            "Clean white leather sneakers with minimal branding and a cushioned sole.",
+          specs: [
+            "Upper: Leather",
+            "Sole: Phylon",
+            "Lining: Cotton",
+            "Made in Portugal",
+          ],
+          tags: ["sneakers", "white", "leather", "casual"],
+          material: "Leather",
+          fit: "True to Size",
+          care: "Spot Clean",
+          season: "All Season",
+          occasion: "Casual",
+          popular: true,
+        }),
+      ];
+
+      document
+        .getElementById("seedProductsBtn")
+        .addEventListener("click", async () => {
+          const statusEl = document.getElementById("seedProductsStatus");
+          if (!auth.currentUser) {
+            toast("Sign in first", "error");
+            return;
+          }
+          statusEl.textContent = "Seeding…";
+          try {
+            for (const p of PRODUCTS) {
+              await setDoc(doc(db, "products", p.id), p);
+            }
+            statusEl.textContent = `✓ Seeded ${PRODUCTS.length} products.`;
+            toast("Products seeded successfully", "success");
+          } catch (err) {
+            statusEl.textContent = `Error: ${err.message}`;
+            toast(
+              "Seeding failed — check Firestore rules allow this admin account to write.",
+              "error",
+            );
+          }
+        });
+
+      document
+        .getElementById("mintInviteBtn")
+        .addEventListener("click", async () => {
+          if (!auth.currentUser) {
+            toast("Sign in first", "error");
+            return;
+          }
+          const code = `GOLD-${uid("").slice(3, 7).toUpperCase()}`;
+          try {
+            await setDoc(doc(db, "vipInvites", code), {
+              used: false,
+              createdAt: Date.now(),
+            });
+            document.getElementById("inviteResult").innerHTML =
+              `<div class="price">${code}</div><p class="text-muted mt-8" style="font-size:.85rem;">Share this with the new member — they redeem it at vip-login.html.</p>`;
+          } catch (err) {
+            toast(err.message, "error");
+          }
+        });
+    </script>
+  </body>
+</html>

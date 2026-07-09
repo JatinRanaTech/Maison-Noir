@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wishlist — MAISON NOIR</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a><a href="shop.html?gender=men">Men</a><a href="shop.html?gender=women">Women</a>
+      <a href="shop.html?sort=newest">New Arrivals</a><a href="vip-login.html" class="vip-link">VIP Members</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+      <a class="nav-icon-btn active" href="wishlist.html" aria-label="Wishlist">♡<span class="badge-count hidden" data-wishlist-count>0</span></a>
+      <a class="nav-icon-btn" href="cart.html" aria-label="Cart">🛍<span class="badge-count hidden" data-cart-count>0</span></a>
+      <a class="nav-icon-btn" href="login.html" data-account-link aria-label="Account">☰</a>
+      <button class="nav-icon-btn nav-toggle" data-drawer-open aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-drawer" data-mobile-drawer><div class="scrim"></div><div class="panel">
+  <a href="shop.html?gender=men">Men</a><a href="shop.html?gender=women">Women</a><a href="vip-login.html">VIP Members</a>
+  <a href="wishlist.html">Wishlist</a><a href="cart.html">Cart</a><a href="login.html" data-account-link>Account</a>
+</div></div>
+
+<main class="section-tight">
+  <div class="container">
+    <h1 class="display-lg" style="margin-bottom:32px;">Your Wishlist</h1>
+    <div id="wishEmpty" class="empty-state hidden">
+      <div class="icon">♡</div>
+      <h3>Your wishlist is empty</h3>
+      <p class="text-muted mt-8">Save items you love and find them here later.</p>
+      <a href="shop.html" class="btn btn-primary mt-24">Browse Products</a>
+    </div>
+    <div class="product-grid" id="wishGrid"></div>
+  </div>
+</main>
+
+<footer class="footer"><div class="container footer-bottom"><span>© 2026 MAISON NOIR. All rights reserved.</span></div></footer>
+
+<script type="module">
+  import "./js/theme.js";
+  import "./js/nav.js";
+  import { getWishlist, removeFromWishlist } from "./js/wishlist.js";
+  import { getAllProducts } from "./js/products.js";
+  import { formatCurrency, escapeHtml, toast } from "./js/utils.js";
+  import { addToCart } from "./js/cart.js";
+
+  async function render() {
+    const list = getWishlist();
+    document.getElementById("wishEmpty").classList.toggle("hidden", list.length > 0);
+    const all = await getAllProducts();
+    document.getElementById("wishGrid").innerHTML = list.map((item) => {
+      const finalPrice = item.discount ? item.price * (1 - item.discount / 100) : item.price;
+      return `
+      <article class="product-card" data-id="${item.id}">
+        <a href="product.html?id=${item.id}"><div class="product-media"><img src="${item.image}" alt="${escapeHtml(item.name)}"></div></a>
+        <div class="product-info">
+          <div class="product-brand">${escapeHtml(item.brand)}</div>
+          <div class="product-name">${escapeHtml(item.name)}</div>
+          <div class="price mt-8">${formatCurrency(finalPrice)}</div>
+          <div class="flex gap-8 mt-16">
+            <button class="btn btn-primary btn-sm" style="flex:1;" data-move-to-cart="${item.id}">Move to Cart</button>
+            <button class="btn btn-outline btn-sm btn-icon" data-remove-wish="${item.id}" title="Remove">✕</button>
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+
+    document.querySelectorAll("[data-move-to-cart]").forEach((btn) => btn.addEventListener("click", async () => {
+      const id = btn.dataset.moveToCart;
+      const product = (await getAllProducts()).find((p) => p.id === id);
+      addToCart(product, { size: product.sizes[0], color: product.colors[0].label, qty: 1 });
+      removeFromWishlist(id);
+      toast("Moved to cart", "success");
+      render();
+    }));
+    document.querySelectorAll("[data-remove-wish]").forEach((btn) => btn.addEventListener("click", () => {
+      removeFromWishlist(btn.dataset.removeWish); toast("Removed from wishlist"); render();
+    }));
+  }
+  render();
+  window.addEventListener("wishlist:updated", render);
+</script>
+</body>
+</html>

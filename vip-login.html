@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VIP Members — MAISON NOIR</title>
+    <meta
+      name="description"
+      content="Sign in to the MAISON NOIR VIP Members portal — an exclusive community with real-time chat."
+    />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+  </head>
+  <body data-theme="dark">
+    <nav class="nav">
+      <div class="container nav-inner">
+        <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+        <div class="nav-actions" style="margin-left: auto">
+          <span class="member-badge">✦ VIP Only</span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="auth-wrap">
+      <div class="auth-card vip-card">
+        <p class="eyebrow" style="color: var(--gold); text-align: center">
+          Private Community
+        </p>
+        <h2 class="display-md" style="text-align: center; margin-bottom: 24px">
+          VIP Members Portal
+        </h2>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="signin">Sign In</button>
+          <button class="auth-tab" data-tab="redeem">Redeem Invite</button>
+        </div>
+
+        <form id="vipLoginForm" novalidate>
+          <div class="field">
+            <label>Username or Email</label
+            ><input name="identifier" required /><span class="error"></span>
+          </div>
+          <div class="field">
+            <label>Password</label
+            ><input name="password" type="password" required /><span
+              class="error"
+            ></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            Enter VIP Portal
+          </button>
+        </form>
+
+        <div id="redeemPanel" class="hidden">
+          <p class="text-muted mt-8" style="font-size: 0.85rem">
+            Already have a MAISON NOIR account? Sign in above first, then redeem
+            your invite code here to unlock VIP access.
+          </p>
+          <div class="field mt-16">
+            <label>Invite Code</label
+            ><input id="inviteCode" placeholder="e.g. GOLD-4F2A" />
+          </div>
+          <button class="btn btn-gold btn-block" id="redeemBtn">
+            Redeem Code
+          </button>
+        </div>
+
+        <p
+          class="text-muted mt-24"
+          style="text-align: center; font-size: 0.85rem"
+        >
+          Not a member yet?
+          <a href="login.html" style="text-decoration: underline"
+            >Create a shop account</a
+          >
+          first, then ask an existing member for an invite.
+        </p>
+      </div>
+    </div>
+
+    <script type="module">
+      import "./js/theme.js";
+      import { vipLogIn, redeemVipInvite } from "./js/vip-auth.js";
+      import { toast, validateForm, validators } from "./js/utils.js";
+      import { auth } from "./js/firebase-config.js";
+
+      document.querySelectorAll(".auth-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".auth-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          document
+            .getElementById("vipLoginForm")
+            .classList.toggle("hidden", tab.dataset.tab !== "signin");
+          document
+            .getElementById("redeemPanel")
+            .classList.toggle("hidden", tab.dataset.tab !== "redeem");
+        });
+      });
+
+      document
+        .getElementById("vipLoginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          if (
+            !validateForm(form, {
+              identifier: [validators.required],
+              password: [validators.required],
+            })
+          )
+            return;
+          const btn = form.querySelector("button[type=submit]");
+          btn.disabled = true;
+          btn.textContent = "Verifying…";
+          try {
+            await vipLogIn({
+              identifier: form.identifier.value,
+              password: form.password.value,
+            });
+            location.href = "vip-portal.html";
+          } catch (err) {
+            toast(err.message.replace("Firebase: ", ""), "error");
+            btn.disabled = false;
+            btn.textContent = "Enter VIP Portal";
+          }
+        });
+
+      document
+        .getElementById("redeemBtn")
+        .addEventListener("click", async () => {
+          if (!auth.currentUser) {
+            toast("Sign in to your shop account first", "error");
+            return;
+          }
+          const code = document.getElementById("inviteCode").value;
+          if (!code) {
+            toast("Enter your invite code", "error");
+            return;
+          }
+          try {
+            await redeemVipInvite(code);
+            toast("Welcome to the VIP community!", "success");
+            location.href = "vip-portal.html";
+          } catch (err) {
+            toast(err.message, "error");
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitleTag">Product — MAISON NOIR</title>
+<meta name="description" content="Shop premium fashion at MAISON NOIR.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html?gender=men">Men</a>
+      <a href="shop.html?gender=women">Women</a>
+      <a href="shop.html?sort=newest">New Arrivals</a>
+      <a href="shop.html?sale=1">Sale</a>
+      <a href="vip-login.html" class="vip-link">VIP Members</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+      <a class="nav-icon-btn" href="wishlist.html" aria-label="Wishlist">♡<span class="badge-count hidden" data-wishlist-count>0</span></a>
+      <a class="nav-icon-btn" href="cart.html" aria-label="Cart">🛍<span class="badge-count hidden" data-cart-count>0</span></a>
+      <a class="nav-icon-btn" href="login.html" data-account-link aria-label="Account">☰</a>
+      <button class="nav-icon-btn nav-toggle" data-drawer-open aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-drawer" data-mobile-drawer>
+  <div class="scrim"></div>
+  <div class="panel">
+    <a href="shop.html?gender=men">Men</a><a href="shop.html?gender=women">Women</a>
+    <a href="shop.html?sort=newest">New Arrivals</a><a href="vip-login.html">VIP Members</a>
+    <a href="wishlist.html">Wishlist</a><a href="cart.html">Cart</a>
+    <a href="login.html" data-account-link>Account</a>
+  </div>
+</div>
+
+<main class="section-tight">
+  <div class="container" id="pdpContainer">
+    <div class="skel" style="height:500px;border-radius:18px;"></div>
+  </div>
+
+  <div class="container mt-32" id="relatedSection" style="display:none;">
+    <div class="section-head"><div><p class="eyebrow">You May Also Like</p><h2 class="display-md">Related Products</h2></div></div>
+    <div class="product-grid" id="relatedGrid"></div>
+  </div>
+</main>
+
+<footer class="footer"><div class="container footer-bottom"><span>© 2026 MAISON NOIR. All rights reserved.</span></div></footer>
+
+<script type="module">
+  import "./js/theme.js";
+  import "./js/nav.js";
+  import { getAllProducts, getProductById, filterAndSort, productCardHTML, formatCurrency } from "./js/products.js";
+  import { starString, escapeHtml, toast } from "./js/utils.js";
+  import { addToCart } from "./js/cart.js";
+  import { toggleWishlist, isWishlisted } from "./js/wishlist.js";
+
+  const id = new URLSearchParams(location.search).get("id");
+  const container = document.getElementById("pdpContainer");
+
+  const DEMO_REVIEWS = [
+    { name: "Alex M.", rating: 5, text: "Fits exactly as described, fabric feels premium. Would buy again." },
+    { name: "Jordan P.", rating: 4, text: "Great piece, runs slightly large so consider sizing down." },
+    { name: "Sam T.", rating: 5, text: "Better in person than in photos. Shipping was fast too." },
+  ];
+
+  getProductById(id).then(async (p) => {
+    if (!p) { container.innerHTML = `<div class="empty-state"><h3>Product not found</h3><a href="shop.html" class="btn btn-primary mt-16">Back to Shop</a></div>`; return; }
+    document.getElementById("pageTitleTag").textContent = `${p.name} — MAISON NOIR`;
+    const finalPrice = p.discount ? p.price * (1 - p.discount / 100) : p.price;
+    let selectedSize = null, selectedColor = p.colors[0].label, qty = 1;
+
+    container.innerHTML = `
+      <div class="pdp">
+        <div>
+          <div class="pdp-gallery-main" id="galleryMain"><img src="${p.gallery[0]}" alt="${escapeHtml(p.name)}"></div>
+          <div class="pdp-thumbs">
+            ${p.gallery.map((g, i) => `<img src="${g}" class="${i === 0 ? "active" : ""}" data-idx="${i}">`).join("")}
+          </div>
+        </div>
+        <div>
+          <div class="product-brand">${escapeHtml(p.brand)}</div>
+          <h1 class="display-lg">${escapeHtml(p.name)}</h1>
+          <div class="rating-row mt-8"><span class="stars">${starString(p.rating)}</span> ${p.rating} (${p.reviews} reviews)</div>
+          <div class="product-price-row mt-16">
+            <span class="price" style="font-size:1.5rem;">${formatCurrency(finalPrice)}</span>
+            ${p.discount ? `<span class="price-strike price">${formatCurrency(p.price)}</span><span class="tag tag-sale">-${p.discount}%</span>` : ""}
+          </div>
+          <p class="text-muted mt-16">${escapeHtml(p.description)}</p>
+
+          <div class="mt-24">
+            <div class="eyebrow">Color: <span id="selectedColorLabel">${p.colors[0].label}</span></div>
+            <div class="option-row" id="colorOptions">
+              ${p.colors.map((c, i) => `<button class="color-btn ${i === 0 ? "selected" : ""}" style="background:${c.hex}" data-color="${c.label}" title="${c.label}"></button>`).join("")}
+            </div>
+          </div>
+
+          <div class="mt-24">
+            <div class="eyebrow">Size ${p.stock === 0 ? "" : "— " + p.stock + " in stock"}</div>
+            <div class="option-row" id="sizeOptions">
+              ${p.sizes.map((s) => `<button class="size-btn" data-size="${s}" ${p.stock === 0 ? "disabled" : ""}>${s}</button>`).join("")}
+            </div>
+            <a href="#" style="font-size:.8rem;text-decoration:underline;" class="text-muted">Size guide</a>
+          </div>
+
+          <div class="mt-24 flex items-center gap-16">
+            <div class="qty-stepper">
+              <button id="qtyMinus">−</button><span id="qtyVal">1</span><button id="qtyPlus">+</button>
+            </div>
+          </div>
+
+          <div class="mt-24 flex gap-12" style="flex-wrap:wrap;">
+            <button class="btn btn-primary" id="addToCartBtn" style="flex:1;min-width:180px;" ${p.stock === 0 ? "disabled" : ""}>
+              ${p.stock === 0 ? "Sold Out" : "Add to Cart"}
+            </button>
+            <button class="btn btn-signal" id="buyNowBtn" style="flex:1;min-width:140px;" ${p.stock === 0 ? "disabled" : ""}>Buy Now</button>
+            <button class="btn btn-outline btn-icon" id="wishlistBtn" title="Add to wishlist">${isWishlisted(p.id) ? "♥" : "♡"}</button>
+          </div>
+
+          <div class="pdp-tabs">
+            <button class="pdp-tab-btn active" data-tab="specs">Specifications</button>
+            <button class="pdp-tab-btn" data-tab="reviews">Reviews (${p.reviews})</button>
+          </div>
+          <div id="tabSpecs" class="mt-16">
+            <ul style="display:flex;flex-direction:column;gap:8px;font-size:.9rem;">
+              ${p.specs.map((s) => `<li>• ${escapeHtml(s)}</li>`).join("")}
+            </ul>
+          </div>
+          <div id="tabReviews" class="mt-16 hidden">
+            ${DEMO_REVIEWS.map((r) => `
+              <div class="review-item">
+                <div class="review-head"><strong>${r.name}</strong><span class="stars">${starString(r.rating)}</span></div>
+                <p class="text-muted mt-8" style="font-size:.88rem;">${escapeHtml(r.text)}</p>
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>`;
+
+    // Gallery
+    const mainGallery = document.getElementById("galleryMain");
+    mainGallery.addEventListener("click", () => mainGallery.classList.toggle("zoomed"));
+    document.querySelectorAll(".pdp-thumbs img").forEach((thumb) => {
+      thumb.addEventListener("click", () => {
+        document.querySelectorAll(".pdp-thumbs img").forEach((t) => t.classList.remove("active"));
+        thumb.classList.add("active");
+        mainGallery.querySelector("img").src = thumb.src;
+        mainGallery.classList.remove("zoomed");
+      });
+    });
+
+    // Color
+    document.querySelectorAll(".color-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".color-btn").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedColor = btn.dataset.color;
+        document.getElementById("selectedColorLabel").textContent = selectedColor;
+      });
+    });
+
+    // Size
+    document.querySelectorAll(".size-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        document.querySelectorAll(".size-btn").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedSize = btn.dataset.size;
+      });
+    });
+
+    // Qty
+    document.getElementById("qtyPlus").addEventListener("click", () => { qty++; document.getElementById("qtyVal").textContent = qty; });
+    document.getElementById("qtyMinus").addEventListener("click", () => { qty = Math.max(1, qty - 1); document.getElementById("qtyVal").textContent = qty; });
+
+    // Tabs
+    document.querySelectorAll(".pdp-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pdp-tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tabSpecs").classList.toggle("hidden", btn.dataset.tab !== "specs");
+        document.getElementById("tabReviews").classList.toggle("hidden", btn.dataset.tab !== "reviews");
+      });
+    });
+
+    function requireSize() {
+      if (!selectedSize) { toast("Please select a size", "error"); return false; }
+      return true;
+    }
+    document.getElementById("addToCartBtn").addEventListener("click", () => {
+      if (!requireSize()) return;
+      addToCart(p, { size: selectedSize, color: selectedColor, qty });
+      toast(`Added ${qty} × "${p.name}" to cart`, "success");
+    });
+    document.getElementById("buyNowBtn").addEventListener("click", () => {
+      if (!requireSize()) return;
+      addToCart(p, { size: selectedSize, color: selectedColor, qty });
+      location.href = "checkout.html";
+    });
+    document.getElementById("wishlistBtn").addEventListener("click", (e) => {
+      const added = toggleWishlist(p);
+      e.target.textContent = added ? "♥" : "♡";
+      toast(added ? "Added to wishlist" : "Removed from wishlist");
+    });
+
+    // Related products
+    const all = await getAllProducts();
+    const related = filterAndSort(all.filter((x) => x.id !== p.id && x.category === p.category), { sort: "rating" }).slice(0, 4);
+    if (related.length) {
+      document.getElementById("relatedSection").style.display = "block";
+      document.getElementById("relatedGrid").innerHTML = related.map(productCardHTML).join("");
+    }
+  });
+</script>
+</body>
+</html>

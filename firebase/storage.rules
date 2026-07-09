@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// ============================================================================
+// FIREBASE STORAGE SECURITY RULES — MAISON NOIR
+//
+// Only needed if you're using real Firebase Storage (USE_BASE64_FALLBACK =
+// false in js/firebase-config.js). Copy into Firebase Console -> Storage ->
+// Rules tab -> Publish. Storage requires the Blaze plan - see README.md
+// "Firebase Setup -> Storage & the Blaze plan" for why and what it costs.
+// ============================================================================
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+    function isVipMember() {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isVip == true;
+    }
+
+    // Chat attachments: only VIP members may upload, and only into a
+    // conversation they are part of. Anyone who can read the matching
+    // Firestore conversation doc may download the file (enforced by
+    // requiring the same VIP check - fine-grained per-conversation download
+    // control would additionally need a Cloud Function, which is out of
+    // scope for a Storage-only free/Blaze-quota setup).
+    match /chat-uploads/{convId}/{fileName} {
+      allow read: if isVipMember();
+      allow write: if isVipMember()
+        && request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|video/.*|audio/.*|application/pdf|application/zip|application/msword|application/vnd.openxmlformats-officedocument.*|application/vnd.ms-excel|text/plain');
+    }
+
+    // Optional: user avatar uploads
+    match /avatars/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == uid && request.resource.size < 3 * 1024 * 1024;
+    }
+
+    // Deny everything else by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

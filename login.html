@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — MAISON NOIR</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-actions" style="margin-left:auto;">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Sign In</button>
+      <button class="auth-tab" data-tab="signup">Create Account</button>
+    </div>
+
+    <form id="loginForm" method="post" novalidate>
+      <div class="field"><label>Username or Email</label><input name="identifier" required><span class="error"></span></div>
+      <div class="field"><label>Password</label><input name="password" type="password" required><span class="error"></span></div>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      <button type="button" class="btn btn-ghost btn-block mt-8" id="forgotBtn">Forgot password?</button>
+    </form>
+
+    <form id="signupForm" method="post" class="hidden" novalidate>
+      <div class="field"><label>Full Name</label><input name="fullName" required><span class="error"></span></div>
+      <div class="field"><label>Username</label><input name="username" required placeholder="e.g. jane_doe"><span class="hint">3-20 characters, letters/numbers/_/.</span><span class="error"></span></div>
+      <div class="field"><label>Email</label><input name="email" type="email" required><span class="error"></span></div>
+      <div class="field"><label>Password</label><input name="password" type="password" required><span class="hint">At least 6 characters</span><span class="error"></span></div>
+      <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+    </form>
+
+    <p class="text-muted mt-24" style="text-align:center;font-size:.85rem;">
+      Looking for the VIP portal? <a href="vip-login.html" style="text-decoration:underline;color:var(--gold);">Enter here</a>
+    </p>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-scrim" id="forgotModal">
+  <div class="modal-box">
+    <div class="modal-head"><strong>Reset Password</strong><button class="btn-ghost btn-icon" id="closeForgot">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Email</label><input id="forgotEmail" type="email"></div>
+      <button class="btn btn-primary btn-block" id="sendResetBtn">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import "./js/theme.js";
+  import { signUp, logIn, resetPassword } from "./js/auth.js";
+  import { toast, validateForm, validators } from "./js/utils.js";
+
+  document.querySelectorAll(".auth-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".auth-tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("loginForm").classList.toggle("hidden", tab.dataset.tab !== "login");
+      document.getElementById("signupForm").classList.toggle("hidden", tab.dataset.tab !== "signup");
+    });
+  });
+
+  const redirect = new URLSearchParams(location.search).get("redirect") || "account.html";
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    if (!validateForm(form, { identifier: [validators.required], password: [validators.required] })) return;
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = "Signing In…";
+    try {
+      await logIn({ identifier: form.identifier.value, password: form.password.value });
+      toast("Welcome back!", "success");
+      location.href = redirect;
+    } catch (err) {
+      toast(err.message.replace("Firebase: ", ""), "error");
+      btn.disabled = false; btn.textContent = "Sign In";
+    }
+  });
+
+  document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    if (!validateForm(form, {
+      fullName: [validators.required], username: [validators.required, validators.minLength(3)],
+      email: [validators.required, validators.email], password: [validators.required, validators.minLength(6)],
+    })) return;
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = "Creating Account…";
+    try {
+      await signUp({ username: form.username.value, email: form.email.value, password: form.password.value, fullName: form.fullName.value });
+      toast("Account created! Welcome to MAISON NOIR.", "success");
+      location.href = redirect;
+    } catch (err) {
+      toast(err.message.replace("Firebase: ", ""), "error");
+      btn.disabled = false; btn.textContent = "Create Account";
+    }
+  });
+
+  document.getElementById("forgotBtn").addEventListener("click", () => document.getElementById("forgotModal").classList.add("open"));
+  document.getElementById("closeForgot").addEventListener("click", () => document.getElementById("forgotModal").classList.remove("open"));
+  document.getElementById("sendResetBtn").addEventListener("click", async () => {
+    const email = document.getElementById("forgotEmail").value;
+    if (!validators.email(email) === true) { toast("Enter a valid email", "error"); return; }
+    try {
+      await resetPassword(email);
+      toast("Reset link sent — check your inbox.", "success");
+      document.getElementById("forgotModal").classList.remove("open");
+    } catch (err) { toast(err.message.replace("Firebase: ", ""), "error"); }
+  });
+</script>
+</body>
+</html>

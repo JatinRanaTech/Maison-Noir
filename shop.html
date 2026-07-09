@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop All — MAISON NOIR</title>
+<meta name="description" content="Browse the full MAISON NOIR catalog — filter by gender, category, brand, color, size, rating, and price.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">MAISON <em>NOIR</em></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html?gender=men">Men</a>
+      <a href="shop.html?gender=women">Women</a>
+      <a href="shop.html?sort=newest">New Arrivals</a>
+      <a href="shop.html?sale=1">Sale</a>
+      <a href="vip-login.html" class="vip-link">VIP Members</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" data-theme-toggle aria-label="Toggle dark mode"><span data-theme-icon>🌙</span></button>
+      <a class="nav-icon-btn" href="wishlist.html" aria-label="Wishlist">♡<span class="badge-count hidden" data-wishlist-count>0</span></a>
+      <a class="nav-icon-btn" href="cart.html" aria-label="Cart">🛍<span class="badge-count hidden" data-cart-count>0</span></a>
+      <a class="nav-icon-btn" href="login.html" data-account-link aria-label="Account">☰</a>
+      <button class="nav-icon-btn nav-toggle" data-drawer-open aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-drawer" data-mobile-drawer>
+  <div class="scrim"></div>
+  <div class="panel">
+    <a href="shop.html?gender=men">Men</a>
+    <a href="shop.html?gender=women">Women</a>
+    <a href="shop.html?sort=newest">New Arrivals</a>
+    <a href="shop.html?sale=1">Sale</a>
+    <a href="vip-login.html">VIP Members</a>
+    <a href="wishlist.html">Wishlist</a>
+    <a href="cart.html">Cart</a>
+    <a href="login.html" data-account-link>Account</a>
+  </div>
+</div>
+
+<main class="section-tight">
+  <div class="container">
+    <p class="eyebrow" id="pageEyebrow">Shop</p>
+    <h1 class="display-lg" id="pageTitle" style="margin-bottom:32px;">All Products</h1>
+
+    <button class="btn btn-outline filter-mobile-toggle" id="filterToggle">Filters &amp; Sort</button>
+
+    <div class="shop-layout">
+      <aside class="filter-panel" id="filterPanel">
+        <div class="filter-group">
+          <div style="font-weight:600;font-size:.9rem;margin-bottom:10px;">Gender</div>
+          <div class="filter-options" id="genderFilter">
+            <label><input type="radio" name="gender" value="all" checked> All</label>
+            <label><input type="radio" name="gender" value="men"> Men</label>
+            <label><input type="radio" name="gender" value="women"> Women</label>
+          </div>
+        </div>
+        <details class="filter-group" open>
+          <summary>Category</summary>
+          <div class="filter-options" id="categoryFilter"></div>
+        </details>
+        <details class="filter-group" open>
+          <summary>Brand</summary>
+          <div class="filter-options" id="brandFilter"></div>
+        </details>
+        <details class="filter-group">
+          <summary>Color</summary>
+          <div class="filter-swatches" id="colorFilter"></div>
+        </details>
+        <details class="filter-group">
+          <summary>Size</summary>
+          <div class="filter-options" id="sizeFilter" style="flex-direction:row;flex-wrap:wrap;"></div>
+        </details>
+        <details class="filter-group">
+          <summary>Rating</summary>
+          <div class="filter-options" id="ratingFilter">
+            <label><input type="radio" name="rating" value=""> Any</label>
+            <label><input type="radio" name="rating" value="4.5"> 4.5 &amp; up</label>
+            <label><input type="radio" name="rating" value="4"> 4.0 &amp; up</label>
+            <label><input type="radio" name="rating" value="3"> 3.0 &amp; up</label>
+          </div>
+        </details>
+        <details class="filter-group">
+          <summary>Price</summary>
+          <div class="filter-options">
+            <input type="range" id="priceMax" min="20" max="400" value="400" step="10" style="width:100%;">
+            <div class="text-muted" id="priceMaxLabel" style="font-size:.85rem;">Up to $400</div>
+          </div>
+        </details>
+        <button class="btn btn-ghost" id="clearFilters">Clear All Filters</button>
+      </aside>
+
+      <div>
+        <div class="toolbar">
+          <span class="text-muted" id="resultCount">Loading…</span>
+          <select id="sortSelect" class="field" style="margin:0;padding:10px 14px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);">
+            <option value="popularity">Popularity</option>
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+          </select>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+        <div class="empty-state hidden" id="emptyState">
+          <div class="icon">🔍</div>
+          <h3>No products match those filters</h3>
+          <p class="text-muted mt-8">Try clearing a few filters to see more results.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer-bottom">
+    <span>© 2026 MAISON NOIR. All rights reserved.</span>
+  </div>
+</footer>
+
+<!-- Quick View Modal -->
+<div class="modal-scrim" id="quickViewModal">
+  <div class="modal-box" style="max-width:760px;">
+    <div class="modal-head">
+      <strong>Quick View</strong>
+      <button class="btn-ghost btn-icon" id="closeQuickView">✕</button>
+    </div>
+    <div class="modal-body" id="quickViewBody"></div>
+  </div>
+</div>
+
+<script type="module">
+  import "./js/theme.js";
+  import "./js/nav.js";
+  import { getAllProducts, filterAndSort, productCardHTML, skeletonCardHTML, formatCurrency } from "./js/products.js";
+  import { starString, escapeHtml, toast } from "./js/utils.js";
+  import { addToCart } from "./js/cart.js";
+  import { toggleWishlist, isWishlisted } from "./js/wishlist.js";
+
+  const params = new URLSearchParams(location.search);
+  const grid = document.getElementById("productGrid");
+  grid.innerHTML = Array(8).fill(skeletonCardHTML()).join("");
+
+  let ALL = [];
+  let state = {
+    gender: params.get("gender") || "all",
+    categories: [], brands: [], colors: [], sizes: [],
+    minRating: null, priceMax: 400,
+    sort: params.get("sort") || "popularity",
+  };
+
+  getAllProducts().then((products) => {
+    ALL = products;
+    if (params.get("sale") === "1") {
+      ALL = ALL.filter((p) => p.discount > 0);
+    }
+    buildFilterOptions();
+    document.querySelector(`input[name="gender"][value="${state.gender}"]`).checked = true;
+    document.getElementById("sortSelect").value = state.sort;
+    render();
+    updateTitle();
+  });
+
+  function buildFilterOptions() {
+    const categories = [...new Set(ALL.map((p) => p.category))];
+    const brands = [...new Set(ALL.map((p) => p.brand))];
+    const colors = [...new Map(ALL.flatMap((p) => p.colors).map((c) => [c.label, c])).values()];
+    const sizes = [...new Set(ALL.flatMap((p) => p.sizes))];
+
+    document.getElementById("categoryFilter").innerHTML = categories.map((c) =>
+      `<label><input type="checkbox" value="${c}" data-filter="category"> ${escapeHtml(c[0].toUpperCase() + c.slice(1))}</label>`).join("");
+    document.getElementById("brandFilter").innerHTML = brands.map((b) =>
+      `<label><input type="checkbox" value="${b}" data-filter="brand"> ${escapeHtml(b)}</label>`).join("");
+    document.getElementById("colorFilter").innerHTML = colors.map((c) =>
+      `<button style="background:${c.hex}" title="${c.label}" data-color="${c.label}"></button>`).join("");
+    document.getElementById("sizeFilter").innerHTML = sizes.map((s) =>
+      `<label style="border:1px solid var(--line-strong);padding:6px 10px;border-radius:6px;"><input type="checkbox" value="${s}" data-filter="size" style="margin-right:5px;">${s}</label>`).join("");
+
+    document.querySelectorAll('input[name="gender"]').forEach((r) => r.addEventListener("change", () => { state.gender = r.value; render(); updateTitle(); }));
+    document.querySelectorAll('[data-filter="category"]').forEach((c) => c.addEventListener("change", syncCheckboxFilters));
+    document.querySelectorAll('[data-filter="brand"]').forEach((c) => c.addEventListener("change", syncCheckboxFilters));
+    document.querySelectorAll('[data-filter="size"]').forEach((c) => c.addEventListener("change", syncCheckboxFilters));
+    document.querySelectorAll('#colorFilter button').forEach((btn) => btn.addEventListener("click", () => {
+      btn.classList.toggle("selected");
+      state.colors = [...document.querySelectorAll('#colorFilter button.selected')].map((b) => b.dataset.color);
+      render();
+    }));
+    document.querySelectorAll('input[name="rating"]').forEach((r) => r.addEventListener("change", () => { state.minRating = r.value ? parseFloat(r.value) : null; render(); }));
+    document.getElementById("priceMax").addEventListener("input", (e) => {
+      state.priceMax = parseInt(e.target.value);
+      document.getElementById("priceMaxLabel").textContent = `Up to $${state.priceMax}`;
+      render();
+    });
+    document.getElementById("sortSelect").addEventListener("change", (e) => { state.sort = e.target.value; render(); });
+    document.getElementById("clearFilters").addEventListener("click", () => location.href = "shop.html");
+  }
+
+  function syncCheckboxFilters() {
+    state.categories = [...document.querySelectorAll('[data-filter="category"]:checked')].map((c) => c.value);
+    state.brands = [...document.querySelectorAll('[data-filter="brand"]:checked')].map((c) => c.value);
+    state.sizes = [...document.querySelectorAll('[data-filter="size"]:checked')].map((c) => c.value);
+    render();
+  }
+
+  function updateTitle() {
+    document.getElementById("pageEyebrow").textContent = state.gender === "all" ? "Shop" : state.gender === "men" ? "Menswear" : "Womenswear";
+    document.getElementById("pageTitle").textContent = state.gender === "all" ? "All Products" : state.gender === "men" ? "Men's Collection" : "Women's Collection";
+  }
+
+  function render() {
+    const filtered = filterAndSort(ALL, state);
+    document.getElementById("resultCount").textContent = `${filtered.length} product${filtered.length !== 1 ? "s" : ""}`;
+    document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
+    grid.innerHTML = filtered.map(productCardHTML).join("");
+    wireCardActions(filtered);
+  }
+
+  function wireCardActions(products) {
+    document.querySelectorAll("[data-quick-add]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = products.find((x) => x.id === btn.dataset.quickAdd);
+        addToCart(p, { size: p.sizes[0], color: p.colors[0].label, qty: 1 });
+        toast(`Added "${p.name}" to cart`, "success");
+      });
+    });
+    document.querySelectorAll("[data-wishlist-toggle]").forEach((btn) => {
+      const p = products.find((x) => x.id === btn.dataset.wishlistToggle);
+      if (isWishlisted(p.id)) { btn.classList.add("active"); btn.textContent = "♥"; }
+      btn.addEventListener("click", () => {
+        const added = toggleWishlist(p);
+        btn.classList.toggle("active", added);
+        btn.textContent = added ? "♥" : "♡";
+        toast(added ? "Added to wishlist" : "Removed from wishlist");
+      });
+    });
+    document.querySelectorAll("[data-quickview]").forEach((btn) => {
+      btn.addEventListener("click", () => openQuickView(products.find((x) => x.id === btn.dataset.quickview)));
+    });
+  }
+
+  function openQuickView(p) {
+    const finalPrice = p.discount ? p.price * (1 - p.discount / 100) : p.price;
+    document.getElementById("quickViewBody").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <img src="${p.image}" style="border-radius:10px;aspect-ratio:3/4;object-fit:cover;">
+        <div>
+          <div class="product-brand">${escapeHtml(p.brand)}</div>
+          <h3 class="display-md">${escapeHtml(p.name)}</h3>
+          <div class="rating-row"><span class="stars">${starString(p.rating)}</span> (${p.reviews})</div>
+          <div class="product-price-row mt-8">
+            <span class="price" style="font-size:1.2rem;">${formatCurrency(finalPrice)}</span>
+            ${p.discount ? `<span class="price-strike price">${formatCurrency(p.price)}</span>` : ""}
+          </div>
+          <p class="text-muted mt-16" style="font-size:.88rem;">${escapeHtml(p.description).slice(0, 140)}...</p>
+          <a href="product.html?id=${p.id}" class="btn btn-primary btn-block mt-24">View Full Details</a>
+        </div>
+      </div>`;
+    document.getElementById("quickViewModal").classList.add("open");
+  }
+  document.getElementById("closeQuickView").addEventListener("click", () => document.getElementById("quickViewModal").classList.remove("open"));
+  document.getElementById("quickViewModal").addEventListener("click", (e) => { if (e.target.id === "quickViewModal") e.target.classList.remove("open"); });
+
+ // Mobile filter toggle (slide-in)
+  const filterPanel = document.getElementById("filterPanel");
+  const filterToggle = document.getElementById("filterToggle");
+
+  if (window.innerWidth <= 900) {
+    // Add a close button inside the filter panel (if not already present)
+    if (!document.getElementById("filterCloseBtn")) {
+      const closeBtn = document.createElement("button");
+      closeBtn.id = "filterCloseBtn";
+      closeBtn.className = "filter-close-btn";
+      closeBtn.innerHTML = "✕";
+      closeBtn.addEventListener("click", () => {
+        filterPanel.classList.remove("open");
+      });
+      filterPanel.prepend(closeBtn);
+    }
+    
+    filterToggle.addEventListener("click", () => {
+      filterPanel.classList.toggle("open");
+    });
+  }
+</script>
+</body>
+</html>
