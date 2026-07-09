@@ -13,9 +13,9 @@
     <link rel="stylesheet" href="css/responsive.css" />
     <style>
       /* =========================================================
-         MAISON NOIR — VIP PORTAL
-         Premium WhatsApp/Telegram/iMessage-grade chat experience
-         Black & Gold luxury theme, glassmorphism, full responsiveness
+        MAISON NOIR — VIP PORTAL
+        Premium WhatsApp/Telegram/iMessage-grade chat experience
+        Black & Gold luxury theme, glassmorphism, full responsiveness
       ========================================================= */
 
       :root {
@@ -89,14 +89,18 @@
         border-radius: 6px;
       }
 
-      /* ---------- Nav ---------- */
-      .nav {
-        position: relative;
-        z-index: 40;
-        padding-top: var(--top-pad);
-        background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
-        border-bottom: 1px solid var(--line);
-      }
+        /* ---------- Nav ---------- */
+        .nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 50;
+          padding-top: var(--top-pad);
+          background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
+          border-bottom: 1px solid var(--line);
+          height: calc(var(--nav-height) + var(--top-pad));
+        }
       .nav-inner {
         height: var(--nav-height);
         display: flex;
@@ -215,6 +219,8 @@
         position: absolute;
         top: calc(var(--nav-height) + var(--top-pad));
         bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         overflow-y: auto;
         overflow-x: hidden;
