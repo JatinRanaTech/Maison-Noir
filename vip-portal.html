@@ -1469,7 +1469,7 @@
         <h3>💬 VIP Chats</h3>
         <div class="actions">
           <button class="btn-ghost btn-icon" id="profileBtn" title="Profile">
-            👤
+            <i class="bi bi-person"></i>
           </button>
           <button class="btn-ghost btn-icon" id="newChatBtn" title="New chat">
             ✚
@@ -1521,7 +1521,7 @@
           />
         </button>
         <button class="btn-ghost btn-icon" id="chatMenuBtn" title="More">
-          ⋮
+          <i class="bi bi-three-dots-vertical"></i>
         </button>
       </div>
 
@@ -2282,8 +2282,8 @@
       const WALLPAPER_PRESETS = [
         "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500",
         "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500",
-        "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500",
-        "https://images.unsplash.com/photo-1533628635777-112b2239b1c7?w=500",
+        "https://images.unsplash.com/photo-1571781565036-d3f759be73e4?w=500",
+        "https://images.unsplash.com/photo-1580915411954-282cb1b0d780?w=500",
         "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500",
         "https://images.unsplash.com/photo-1524169358666-79f22534bc6e?w=500",
         "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500",
@@ -2764,7 +2764,7 @@
             ? '<i class="bi bi-pin pin-flag"></i>'
             : "";
           const starFlag = starredIds.has(m.id)
-            ? '<span class="star-flag">⭐</span>'
+            ? '<i class="bi bi-star"></i>'
             : "";
           let tickIcon = "";
           if (mine) {
