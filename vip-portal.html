@@ -468,6 +468,7 @@
         display: inline-block;
         border-radius: 12px;
         border: 1px solid var(--line);
+        
       }
 
       .msg-row {
@@ -476,6 +477,7 @@
         position: relative;
         animation: msgIn 0.28s var(--ease) both;
         max-width: 100%;
+        touch-action: pan-y;
       }
       @keyframes msgIn {
         from {
@@ -1390,6 +1392,34 @@
       .emoji-grid span:active {
         transform: scale(1.35);
       }
+      .emoji-live-preview {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        max-height: 80px;
+        overflow-y: auto;
+        padding: 8px 14px;
+        margin-bottom: 10px;
+        background: var(--input-bg);
+        border-radius: 18px;
+        font-size: 0.92rem;
+        color: var(--text);
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+      .emoji-caret {
+        display: inline-block;
+        width: 1px;
+        height: 1.1em;
+        background: var(--gold);
+        margin-left: 2px;
+        animation: caretBlink 1s steps(1) infinite;
+      }
+      @keyframes caretBlink {
+        50% {
+          opacity: 0;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1596,6 +1626,9 @@
     <div class="sheet-scrim" id="mediaPickerScrim"></div>
     <div class="bottom-sheet" id="mediaPicker">
       <div class="sheet-handle"></div>
+      <div class="emoji-live-preview" id="emojiLivePreview">
+        <span id="emojiLivePreviewText"></span><span class="emoji-caret"></span>
+      </div>
       <div class="picker-tabs">
         <button class="picker-tab active" data-tab="emoji">😀 Emoji</button>
         <button class="picker-tab" data-tab="gif">GIF</button>
@@ -1780,6 +1813,20 @@
           <button class="btn-ghost btn-icon" id="closeMsgInfoModal">✕</button>
         </div>
         <div class="modal-body" id="msgInfoBody"></div>
+      </div>
+    </div>
+
+        <!-- ============ Edit Message modal ============ -->
+    <div class="modal-scrim" id="editMsgModal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <strong class="brand" style="font-size: 1rem">MAISON <em>NOIR</em></strong>
+          <button class="btn-ghost btn-icon" id="closeEditMsgModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="editMsgTextarea" class="field" rows="4" style="resize: vertical; width: 100%; margin-bottom: 14px; font-family: inherit;"></textarea>
+          <button class="btn btn-primary btn-block" id="saveEditMsgBtn">Save</button>
+        </div>
       </div>
     </div>
 
@@ -2453,24 +2500,25 @@
         chatPage.classList.remove("hidden");
         profilePage.classList.add("hidden");
       }
-      function showProfilePage() {
+        function showProfilePage() {
         listPage.classList.add("hidden");
         chatPage.classList.add("hidden");
         profilePage.classList.remove("hidden");
-        document.getElementById("profileUsername").value =
-          profile.username || "";
-        document.getElementById("profileAvatarImg").src = avatarUrl({
-          uid: user.uid,
-          photoURL: profile.photoURL,
-        });
+        document.getElementById("profileUsername").value = profile.username || "";
+        document.getElementById("profileAvatarImg").src = avatarUrl({ uid: user.uid, photoURL: profile.photoURL });
+        history.pushState({ page: "profile" }, "");
       }
 
-      window.addEventListener("popstate", () => {
-        if (!chatPage.classList.contains("hidden")) showList();
-        else if (!profilePage.classList.contains("hidden")) showList();
+        window.addEventListener("popstate", (e) => {
+        const state = e.state;
+        if (!state || state.page !== "chat") {
+          document.getElementById("mediaPicker").classList.remove("open");
+          document.getElementById("mediaPickerScrim").classList.remove("open");
+          showList();
+          if (!state) history.replaceState({ page: "list" }, "");
+        }
       });
       document.getElementById("chatBackBtn").addEventListener("click", () => {
-        showList();
         history.back();
       });
       document
@@ -2507,7 +2555,7 @@
           document.getElementById("chatStatusText").textContent = "";
         }
         showChatPage();
-        history.pushState({ chat: true, convId }, "");
+        history.pushState({ chat: true, page: "chat", convId }, "");
 
         const convRef = doc(db, "conversations", convId);
         const convSnap = await getDoc(convRef);
@@ -2611,7 +2659,7 @@
       // ========== MESSAGES RENDERING ==========
       function messageContentHtml(m, metaHtml = "") {
         if (m.deleted)
-          return `<div class="msg-text">This message was deleted${metaHtml}</div>`;
+          return `<div class="msg-text"><span class="msg-text-content">This message was deleted</span>${metaHtml}</div>`;
         if (m.type === "image")
           return `<div class="msg-media"><img src="${m.fileUrl}" data-msg="${m.id}" alt="photo"></div>`;
         if (m.type === "video")
@@ -2630,10 +2678,10 @@
             <span><div>${escapeHtml(m.fileName || "Attachment")}</div><div class="file-meta">${size}</div></span>
           </a>`;
         }
-        return `<div class="msg-text">${escapeHtml(m.text || "")}${metaHtml}</div>`;
+        return `<div class="msg-text"><span class="msg-text-content">${escapeHtml(m.text || "")}</span>${metaHtml}</div>`;
       }
-
-      function renderMessages() {
+      let previousRenderedIds = new Set();
+      function renderMessages() {       
         const wasAtBottom =
           chatBody.scrollTop + chatBody.clientHeight >=
           chatBody.scrollHeight - 80;
@@ -2685,18 +2733,22 @@
               .join(" ");
             reactionsHtml = `<div class="msg-reactions">${reactionStr}</div>`;
           }
+          const skipAnim = previousRenderedIds.has(m.id)
+            ? ' style="animation:none"'
+            : "";
           html += `
-            <div class="msg-row ${mine ? "mine" : ""}" data-msg-id="${m.id}">
-              <div class="msg-bubble-col">
-                <div class="msg-bubble ${m.deleted ? "deleted" : ""}">
-                  ${content}
-                  ${blockMetaHtml}
+              <div class="msg-row ${mine ? "mine" : ""}" data-msg-id="${m.id}"${skipAnim}>
+                <div class="msg-bubble-col">
+                  <div class="msg-bubble ${m.deleted ? "deleted" : ""}">
+                    ${content}
+                    ${blockMetaHtml}
+                  </div>
+                  ${reactionsHtml}
                 </div>
-                ${reactionsHtml}
-              </div>
-            </div>`;
+              </div>`;
         });
         document.getElementById("messagesContainer").innerHTML = html;
+        previousRenderedIds = new Set(currentMessages.map((m) => m.id));
         if (wasAtBottom) chatBody.scrollTop = chatBody.scrollHeight;
         handleNewMessagesBtn();
         wireMessageRowEvents();
@@ -2788,8 +2840,13 @@
       const msgInput = document.getElementById("messageInput");
       const sendBtnEl = document.getElementById("sendBtn");
       const voiceBtn = document.getElementById("voiceBtn");
+      function syncEmojiPreview() {
+        const el = document.getElementById("emojiLivePreviewText");
+        if (el) el.textContent = msgInput.value;
+      }
 
       msgInput.addEventListener("input", () => {
+        syncEmojiPreview();
         msgInput.style.height = "auto";
         msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + "px";
         const hasText = msgInput.value.trim().length > 0;
@@ -2886,12 +2943,13 @@
           let touchStartX = 0,
             touchStartY = 0,
             swiping = false;
-          row.addEventListener(
+            row.addEventListener(
             "touchstart",
             (e) => {
               touchStartX = e.touches[0].clientX;
               touchStartY = e.touches[0].clientY;
               swiping = true;
+              row.style.animation = "none";
             },
             { passive: true },
           );
@@ -2960,6 +3018,8 @@
         const msg = currentMessages.find((m) => m.id === msgId);
         if (!msg) return;
         const mine = msg.senderId === user.uid;
+        const isPinned = getPinnedMsgIds(activeConvId).has(msgId);
+        const isStarred = getStarredMsgIds(activeConvId).has(msgId);
         document
           .querySelectorAll("#actionSheet .action-item")
           .forEach((btn) => {
@@ -2968,6 +3028,10 @@
               btn.classList.toggle("hidden", !mine || msg.type !== "text");
             if (action === "deleteEveryone")
               btn.classList.toggle("hidden", !mine);
+            if (action === "pin")
+              btn.innerHTML = isPinned ? "📌 Unpin" : "📌 Pin";
+            if (action === "star")
+              btn.innerHTML = isStarred ? "⭐ Unstar" : "⭐ Star";
           });
         const row = document.getElementById("reactionRow");
         row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
@@ -3045,16 +3109,30 @@
         });
       });
 
+            let editingMsg = null;
       function openEditMessage(msg) {
-        const newText = prompt("Edit message", msg.text || "");
-        if (newText === null) return;
-        const trimmed = newText.trim();
-        if (!trimmed) return;
-        updateDoc(doc(db, "conversations", activeConvId, "messages", msg.id), {
+        editingMsg = msg;
+        document.getElementById("editMsgTextarea").value = msg.text || "";
+        document.getElementById("editMsgModal").classList.add("open");
+        setTimeout(() => document.getElementById("editMsgTextarea").focus(), 50);
+      }
+      document.getElementById("closeEditMsgModal").addEventListener("click", () => {
+        document.getElementById("editMsgModal").classList.remove("open");
+        editingMsg = null;
+      });
+      document.getElementById("saveEditMsgBtn").addEventListener("click", async () => {
+        const trimmed = document.getElementById("editMsgTextarea").value.trim();
+        document.getElementById("editMsgModal").classList.remove("open");
+        if (!editingMsg || !trimmed || trimmed === editingMsg.text) {
+          editingMsg = null;
+          return;
+        }
+        await updateDoc(doc(db, "conversations", activeConvId, "messages", editingMsg.id), {
           text: trimmed,
           edited: true,
         });
-      }
+        editingMsg = null;
+      });
 
       function openMessageInfo(msg) {
         const body = document.getElementById("msgInfoBody");
@@ -3137,7 +3215,7 @@
           countEl.textContent =
             matches.length + " match" + (matches.length === 1 ? "" : "es");
           renderMessages();
-          document.querySelectorAll(".msg-text").forEach((el) => {
+          document.querySelectorAll(".msg-text-content").forEach((el) => {
             if (el.textContent.toLowerCase().includes(term)) {
               const regex = new RegExp(
                 `(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
@@ -3509,6 +3587,7 @@
           } else {
             openSheet("mediaPickerScrim", "mediaPicker");
             renderEmojiGrid();
+            syncEmojiPreview();
             renderRecentEmojis();
             if (GIPHY_API_KEY && GIPHY_API_KEY !== "YOUR_GIPHY_API_KEY")
               fetchTrendingGifs();
@@ -3542,6 +3621,7 @@
         const newPos = start + emoji.length;
         msgInput.setSelectionRange(newPos, newPos);
         msgInput.dispatchEvent(new Event("input"));
+        syncEmojiPreview();
         requestAnimationFrame(() => {
           msgInput.scrollTop = msgInput.scrollHeight;
         });
@@ -3922,7 +4002,8 @@
           document.getElementById("newChatModal").classList.remove("open"),
         );
 
-      // Initial load
+      // Initial load      
+      history.replaceState({ page: "list" }, "");
       renderSkeleton();
     </script>
   </body>
