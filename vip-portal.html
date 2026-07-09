@@ -7,7 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>VIP Portal</title>
-    <link rel="icon" type="image/png" href="images/favicon.webp">
+    <link rel="icon" type="image/png" href="images/favicon.webp" />
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/components.css" />
@@ -75,13 +75,13 @@
         font-family: inherit;
       }
       #mediaPickerBtn {
-          width: 54px;
-          height: 40px;
+        width: 54px;
+        height: 40px;
       }
 
       #mediaPickerBtn img {
-          width: 30px;
-          height: 30px;
+        width: 30px;
+        height: 30px;
       }
       img,
       video {
@@ -98,18 +98,18 @@
         border-radius: 6px;
       }
 
-        /* ---------- Nav ---------- */
-        .nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 50;
-          padding-top: var(--top-pad);
-          background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
-          border-bottom: 1px solid var(--line);
-          height: calc(var(--nav-height) + var(--top-pad));
-        }
+      /* ---------- Nav ---------- */
+      .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        padding-top: var(--top-pad);
+        background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
+        border-bottom: 1px solid var(--line);
+        height: calc(var(--nav-height) + var(--top-pad));
+      }
       .nav-inner {
         height: var(--nav-height);
         display: flex;
@@ -157,7 +157,10 @@
         font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
-        transition: transform 0.15s var(--ease), background 0.2s, opacity 0.2s;
+        transition:
+          transform 0.15s var(--ease),
+          background 0.2s,
+          opacity 0.2s;
       }
       .btn:active {
         transform: scale(0.95);
@@ -235,7 +238,9 @@
         overflow-x: hidden;
         background: var(--bg);
         transform: translateX(0);
-        transition: transform 0.32s var(--ease), opacity 0.32s var(--ease);
+        transition:
+          transform 0.32s var(--ease),
+          opacity 0.32s var(--ease);
       }
       .page.hidden {
         display: none;
@@ -977,7 +982,9 @@
         border-radius: 10px;
         cursor: pointer;
         border: 2px solid transparent;
-        transition: border-color 0.2s, transform 0.15s;
+        transition:
+          border-color 0.2s,
+          transform 0.15s;
       }
       .wallpaper-grid img:active {
         transform: scale(0.94);
@@ -1258,8 +1265,8 @@
         align-items: center;
         pointer-events: none;
       }
-      #voiceBtn{
-        background:linear-gradient(180deg, #005C4B 0%, #025144 100%);
+      #voiceBtn {
+        background: linear-gradient(180deg, #005c4b 0%, #025144 100%);
       }
 
       @keyframes fadeSlideIn {
@@ -1330,6 +1337,59 @@
       .msg-text-inline-meta .msg-status.read {
         color: #4fc3f7;
       }
+      .pinned-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .pinned-bar:hover {
+        background: var(--hover);
+      }
+      .pinned-bar-icon {
+        font-size: 0.95rem;
+        color: var(--gold-soft);
+        flex-shrink: 0;
+      }
+      .pinned-bar-text {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.82rem;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border-left: 3px solid var(--gold);
+        padding-left: 8px;
+      }
+      .pinned-bar-count {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        flex-shrink: 0;
+      }
+
+      .typing-row-inline {
+        padding: 4px 4px 4px 4px;
+        transition: opacity 0.2s var(--ease);
+      }
+      .typing-row-inline.hidden {
+        display: none;
+      }
+      .composer textarea {
+        transition: height 0.15s var(--ease);
+      }
+      .emoji-grid span {
+        transition:
+          transform 0.12s var(--ease),
+          background 0.15s;
+      }
+      .emoji-grid span:active {
+        transform: scale(1.35);
+      }
     </style>
   </head>
   <body>
@@ -1350,12 +1410,21 @@
       <div class="list-topbar">
         <h3>💬 VIP Chats</h3>
         <div class="actions">
-          <button class="btn-ghost btn-icon" id="profileBtn" title="Profile">👤</button>
-          <button class="btn-ghost btn-icon" id="newChatBtn" title="New chat">✚</button>
+          <button class="btn-ghost btn-icon" id="profileBtn" title="Profile">
+            👤
+          </button>
+          <button class="btn-ghost btn-icon" id="newChatBtn" title="New chat">
+            ✚
+          </button>
         </div>
       </div>
       <div class="search-wrap">
-        <input type="text" id="convSearch" class="search-input" placeholder="Search conversations…" />
+        <input
+          type="text"
+          id="convSearch"
+          class="search-input"
+          placeholder="Search conversations…"
+        />
       </div>
       <div id="convList"></div>
       <div id="convSkeleton"></div>
@@ -1370,29 +1439,61 @@
       <div class="chat-header">
         <button class="btn-ghost btn-icon" id="chatBackBtn">←</button>
         <div class="avatar-wrap" style="margin-right: 10px">
-          <img id="chatAvatar" class="avatar" style="width: 40px; height: 40px" src="" />
+          <img
+            id="chatAvatar"
+            class="avatar"
+            style="width: 40px; height: 40px"
+            src=""
+          />
           <span class="status-dot" id="chatStatusDot"></span>
         </div>
         <div class="chat-header-info" id="chatHeaderInfo">
           <div id="chatName" class="name"></div>
           <div id="chatStatusText"></div>
         </div>
-        <button class="btn-ghost btn-icon" id="searchInChatBtn" title="Search in chat"><img
-          src="images/attachments/lens.png"
-          class="img-fluid rounded-top"
-          alt="lens"
-        /></button>
-        <button class="btn-ghost btn-icon" id="chatMenuBtn" title="More">⋮</button>
+        <button
+          class="btn-ghost btn-icon"
+          id="searchInChatBtn"
+          title="Search in chat"
+        >
+          <img
+            src="images/attachments/lens.png"
+            class="img-fluid rounded-top"
+            alt="lens"
+          />
+        </button>
+        <button class="btn-ghost btn-icon" id="chatMenuBtn" title="More">
+          ⋮
+        </button>
       </div>
 
       <div id="searchInChatBar">
         <button class="btn-ghost btn-icon" id="closeSearchInChat">←</button>
-        <input type="text" id="searchInChatInput" placeholder="Search in this chat…" />
-        <span id="searchMatchCount" style="font-size: 0.75rem; color: var(--text-muted)"></span>
+        <input
+          type="text"
+          id="searchInChatInput"
+          placeholder="Search in this chat…"
+        />
+        <span
+          id="searchMatchCount"
+          style="font-size: 0.75rem; color: var(--text-muted)"
+        ></span>
       </div>
 
-      <div class="chat-body" id="chatBody"></div>
-      <div id="typingRow" style="padding: 0 14px"></div>
+      <div id="pinnedBar" class="pinned-bar hidden">
+        <div class="pinned-bar-icon">📌</div>
+        <div class="pinned-bar-text" id="pinnedBarText"></div>
+        <div class="pinned-bar-count" id="pinnedBarCount"></div>
+      </div>
+
+      <div class="chat-body" id="chatBody">
+        <div id="messagesContainer"></div>
+        <div id="typingRow" class="typing-row-inline hidden">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
 
       <div id="replyPreview">
         <div class="rp-text" id="replyPreviewText"></div>
@@ -1400,32 +1501,49 @@
       </div>
 
       <div class="composer" id="composerBar">
-        <button class="btn-ghost btn-icon" id="mediaPickerBtn"><img
-          src="images/attachments/emoji.png"
-          class="emojipicker"
-          alt="emojipicker"
-        />
+        <button class="btn-ghost btn-icon" id="mediaPickerBtn">
+          <img
+            src="images/attachments/emoji.png"
+            class="emojipicker"
+            alt="emojipicker"
+          />
         </button>
-        <button class="btn-ghost btn-icon" id="attachBtn"><img
-          src="images/attachments/attachment.png"
-          class="img-fluid rounded-top"
-          alt="attachment"
-        /></button>
-        <button class="btn-ghost btn-icon" id="cameraBtn"><img
-          src="images/attachments/camera.png"
-          class="img-fluid rounded-top"
-          alt="camera"
-        /></button>
+        <button class="btn-ghost btn-icon" id="attachBtn">
+          <img
+            src="images/attachments/attachment.png"
+            class="img-fluid rounded-top"
+            alt="attachment"
+          />
+        </button>
+        <button class="btn-ghost btn-icon" id="cameraBtn">
+          <img
+            src="images/attachments/camera.png"
+            class="img-fluid rounded-top"
+            alt="camera"
+          />
+        </button>
         <div class="composer-input-wrap">
-          <textarea id="messageInput" rows="1" placeholder="Message…"></textarea>
+          <textarea
+            id="messageInput"
+            rows="1"
+            placeholder="Message…"
+          ></textarea>
         </div>
         <input type="file" id="fileInput" hidden />
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
-        <button class="btn-ghost btn-icon" id="voiceBtn"><img
-          src="images/attachments/microphone.png"
-          class="img-fluid rounded-top"
-          alt="microphone"
-        /></button>
+        <input
+          type="file"
+          id="cameraInput"
+          accept="image/*"
+          capture="environment"
+          hidden
+        />
+        <button class="btn-ghost btn-icon" id="voiceBtn">
+          <img
+            src="images/attachments/microphone.png"
+            class="img-fluid rounded-top"
+            alt="microphone"
+          />
+        </button>
         <button class="send-btn hidden" id="sendBtn">➤</button>
 
         <div class="voice-rec-ui" id="voiceRecUi">
@@ -1440,16 +1558,37 @@
 
     <!-- ============ Profile Page ============ -->
     <div class="page hidden" id="profilePage">
-      <div style="padding: 28px 20px; text-align: center; max-width: 340px; margin: 0 auto">
+      <div
+        style="
+          padding: 28px 20px;
+          text-align: center;
+          max-width: 340px;
+          margin: 0 auto;
+        "
+      >
         <img
           id="profileAvatarImg"
           class="avatar"
-          style="width: 88px; height: 88px; margin-bottom: 16px; cursor: pointer"
+          style="
+            width: 88px;
+            height: 88px;
+            margin-bottom: 16px;
+            cursor: pointer;
+          "
         />
         <input type="file" id="profileAvatarFile" accept="image/*" hidden />
-        <input id="profileUsername" class="field" value="" style="margin-bottom: 16px; text-align: center" />
-        <button class="btn btn-primary btn-block" id="saveProfileBtn">Save</button>
-        <button class="btn btn-ghost btn-block" id="closeProfileBtn">Back</button>
+        <input
+          id="profileUsername"
+          class="field"
+          value=""
+          style="margin-bottom: 16px; text-align: center"
+        />
+        <button class="btn btn-primary btn-block" id="saveProfileBtn">
+          Save
+        </button>
+        <button class="btn btn-ghost btn-block" id="closeProfileBtn">
+          Back
+        </button>
       </div>
     </div>
 
@@ -1462,7 +1601,12 @@
         <button class="picker-tab" data-tab="gif">GIF</button>
       </div>
       <div class="picker-content" id="emojiContent">
-        <input type="text" class="picker-search" id="emojiSearch" placeholder="Search emoji…" />
+        <input
+          type="text"
+          class="picker-search"
+          id="emojiSearch"
+          placeholder="Search emoji…"
+        />
         <div id="emojiRecentWrap">
           <div class="picker-section-title">Frequently Used</div>
           <div class="emoji-grid" id="emojiRecentGrid"></div>
@@ -1471,9 +1615,16 @@
         <div class="emoji-grid" id="emojiGrid"></div>
       </div>
       <div class="picker-content hidden" id="gifContent">
-        <input type="text" id="gifSearch" class="picker-search" placeholder="Search GIFs" />
+        <input
+          type="text"
+          id="gifSearch"
+          class="picker-search"
+          placeholder="Search GIFs"
+        />
         <div class="picker-tabs" id="gifCatTabs">
-          <button class="picker-tab active" data-cat="trending">Trending</button>
+          <button class="picker-tab active" data-cat="trending">
+            Trending
+          </button>
           <button class="picker-tab" data-cat="recent">Recently Used</button>
         </div>
         <div class="gif-grid" id="gifGrid"></div>
@@ -1484,7 +1635,9 @@
     <div class="sheet-scrim" id="wallpaperScrim"></div>
     <div class="bottom-sheet" id="wallpaperSheet" style="max-height: 82vh">
       <div class="sheet-handle"></div>
-      <strong style="display: block; margin-bottom: 10px">Chat Wallpaper</strong>
+      <strong style="display: block; margin-bottom: 10px"
+        >Chat Wallpaper</strong
+      >
       <div class="wallpaper-preview" id="wallpaperPreview">
         <div class="wp-overlay" id="wpOverlay"></div>
       </div>
@@ -1494,7 +1647,12 @@
         <button class="picker-tab" data-wtab="favorites">Favorites</button>
       </div>
       <div class="wallpaper-grid" id="wallpaperGrid"></div>
-      <input type="file" id="wallpaperFile" accept="image/*" style="margin-bottom: 14px" />
+      <input
+        type="file"
+        id="wallpaperFile"
+        accept="image/*"
+        style="margin-bottom: 14px"
+      />
 
       <div class="slider-row">
         <label><span>Blur</span><span id="blurVal">0px</span></label>
@@ -1505,7 +1663,9 @@
         <input type="range" id="brightSlider" min="20" max="150" value="100" />
       </div>
       <div class="slider-row">
-        <label><span>Overlay darkness</span><span id="overlayVal">0%</span></label>
+        <label
+          ><span>Overlay darkness</span><span id="overlayVal">0%</span></label
+        >
         <input type="range" id="overlaySlider" min="0" max="80" value="0" />
       </div>
       <div class="slider-row">
@@ -1514,9 +1674,27 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 6px">
-        <button class="btn btn-outline btn-sm" id="favWallpaperBtn" style="flex: 1">☆ Favorite</button>
-        <button class="btn btn-outline btn-sm" id="removeWallpaperBtn" style="flex: 1">Remove</button>
-        <button class="btn btn-primary btn-sm" id="applyWallpaperBtn" style="flex: 1">Apply</button>
+        <button
+          class="btn btn-outline btn-sm"
+          id="favWallpaperBtn"
+          style="flex: 1"
+        >
+          ☆ Favorite
+        </button>
+        <button
+          class="btn btn-outline btn-sm"
+          id="removeWallpaperBtn"
+          style="flex: 1"
+        >
+          Remove
+        </button>
+        <button
+          class="btn btn-primary btn-sm"
+          id="applyWallpaperBtn"
+          style="flex: 1"
+        >
+          Apply
+        </button>
       </div>
     </div>
 
@@ -1532,8 +1710,12 @@
       <button class="action-item" data-action="star">⭐ Star</button>
       <button class="action-item" data-action="edit">✏️ Edit</button>
       <button class="action-item" data-action="info">ℹ️ Message Info</button>
-      <button class="action-item danger" data-action="deleteMe">🗑️ Delete for Me</button>
-      <button class="action-item danger" data-action="deleteEveryone">🗑️ Delete for Everyone</button>
+      <button class="action-item danger" data-action="deleteMe">
+        🗑️ Delete for Me
+      </button>
+      <button class="action-item danger" data-action="deleteEveryone">
+        🗑️ Delete for Everyone
+      </button>
     </div>
 
     <!-- ============ Chat overflow menu ============ -->
@@ -1541,10 +1723,18 @@
     <div class="action-sheet" id="chatMenuSheet">
       <div class="sheet-handle"></div>
       <button class="action-item" data-menu="wallpaper">🖼️ Wallpaper</button>
-      <button class="action-item" data-menu="sharedMedia">🗂️ Shared Media</button>
-      <button class="action-item" data-menu="pinnedList">📌 Pinned Messages</button>
-      <button class="action-item" data-menu="starredList">⭐ Starred Messages</button>
-      <button class="action-item danger" data-menu="deleteChat">🗑️ Delete Conversation</button>
+      <button class="action-item" data-menu="sharedMedia">
+        🗂️ Shared Media
+      </button>
+      <button class="action-item" data-menu="pinnedList">
+        📌 Pinned Messages
+      </button>
+      <button class="action-item" data-menu="starredList">
+        ⭐ Starred Messages
+      </button>
+      <button class="action-item danger" data-menu="deleteChat">
+        🗑️ Delete Conversation
+      </button>
     </div>
 
     <!-- ============ New Chat modal ============ -->
@@ -1563,7 +1753,9 @@
       <div class="modal-box">
         <div class="modal-head">
           <strong>Shared Media</strong>
-          <button class="btn-ghost btn-icon" id="closeSharedMediaModal">✕</button>
+          <button class="btn-ghost btn-icon" id="closeSharedMediaModal">
+            ✕
+          </button>
         </div>
         <div class="modal-body" id="sharedMediaBody"></div>
       </div>
@@ -1752,28 +1944,235 @@
       // ========== FULL EMOJI DATA ==========
       const FULL_EMOJIS = {
         smileys: [
-          "😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","😍","🤩","😘","😗","😚","😋","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","😵","🤯","🤠","🥳","🥴","🥺",
+          "😀",
+          "😃",
+          "😄",
+          "😁",
+          "😆",
+          "😅",
+          "🤣",
+          "😂",
+          "🙂",
+          "🙃",
+          "😉",
+          "😊",
+          "😇",
+          "😍",
+          "🤩",
+          "😘",
+          "😗",
+          "😚",
+          "😋",
+          "😜",
+          "🤪",
+          "😝",
+          "🤑",
+          "🤗",
+          "🤭",
+          "🤫",
+          "🤔",
+          "🤐",
+          "🤨",
+          "😐",
+          "😑",
+          "😶",
+          "😏",
+          "😒",
+          "🙄",
+          "😬",
+          "🤥",
+          "😌",
+          "😔",
+          "😪",
+          "🤤",
+          "😴",
+          "😷",
+          "🤒",
+          "🤕",
+          "🤢",
+          "🤮",
+          "🤧",
+          "😵",
+          "🤯",
+          "🤠",
+          "🥳",
+          "🥴",
+          "🥺",
         ],
         people: [
-          "👋","🤚","🖐️","✋","🖖","👌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏",
+          "👋",
+          "🤚",
+          "🖐️",
+          "✋",
+          "🖖",
+          "👌",
+          "🤏",
+          "✌️",
+          "🤞",
+          "🤟",
+          "🤘",
+          "🤙",
+          "👈",
+          "👉",
+          "👆",
+          "👇",
+          "☝️",
+          "👍",
+          "👎",
+          "✊",
+          "👊",
+          "🤛",
+          "🤜",
+          "👏",
+          "🙌",
+          "👐",
+          "🤲",
+          "🤝",
+          "🙏",
         ],
         animals: [
-          "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵",
+          "🐶",
+          "🐱",
+          "🐭",
+          "🐹",
+          "🐰",
+          "🦊",
+          "🐻",
+          "🐼",
+          "🐨",
+          "🐯",
+          "🦁",
+          "🐮",
+          "🐷",
+          "🐸",
+          "🐵",
         ],
         food: [
-          "🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🧄","🧅","🥔","🍠",
+          "🍏",
+          "🍎",
+          "🍐",
+          "🍊",
+          "🍋",
+          "🍌",
+          "🍉",
+          "🍇",
+          "🍓",
+          "🍈",
+          "🍒",
+          "🍑",
+          "🥭",
+          "🍍",
+          "🥥",
+          "🥝",
+          "🍅",
+          "🍆",
+          "🥑",
+          "🥦",
+          "🥬",
+          "🥒",
+          "🌶️",
+          "🌽",
+          "🥕",
+          "🧄",
+          "🧅",
+          "🥔",
+          "🍠",
         ],
         travel: [
-          "🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜",
+          "🚗",
+          "🚕",
+          "🚙",
+          "🚌",
+          "🚎",
+          "🏎️",
+          "🚓",
+          "🚑",
+          "🚒",
+          "🚐",
+          "🚚",
+          "🚛",
+          "🚜",
         ],
         activities: [
-          "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🏑","🥍","🏏",
+          "⚽",
+          "🏀",
+          "🏈",
+          "⚾",
+          "🥎",
+          "🎾",
+          "🏐",
+          "🏉",
+          "🥏",
+          "🎱",
+          "🪀",
+          "🏓",
+          "🏸",
+          "🏒",
+          "🏑",
+          "🥍",
+          "🏏",
         ],
         objects: [
-          "💡","🔦","🕯️","🪔","📖","📚","📓","📒","📔","📕","📗","📘","📙","📌","📍","📎","🖇️","📏","📐","✂️","🗂️","📁","📂","🗑️","🔒","🔓","🔏","🔐","🔑",
+          "💡",
+          "🔦",
+          "🕯️",
+          "🪔",
+          "📖",
+          "📚",
+          "📓",
+          "📒",
+          "📔",
+          "📕",
+          "📗",
+          "📘",
+          "📙",
+          "📌",
+          "📍",
+          "📎",
+          "🖇️",
+          "📏",
+          "📐",
+          "✂️",
+          "🗂️",
+          "📁",
+          "📂",
+          "🗑️",
+          "🔒",
+          "🔓",
+          "🔏",
+          "🔐",
+          "🔑",
         ],
         symbols: [
-          "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","🔯","🕎","☯️","☦️",
+          "❤️",
+          "🧡",
+          "💛",
+          "💚",
+          "💙",
+          "💜",
+          "🖤",
+          "🤍",
+          "🤎",
+          "💔",
+          "❣️",
+          "💕",
+          "💞",
+          "💓",
+          "💗",
+          "💖",
+          "💘",
+          "💝",
+          "💟",
+          "☮️",
+          "✝️",
+          "☪️",
+          "🕉️",
+          "☸️",
+          "✡️",
+          "🔯",
+          "🕎",
+          "☯️",
+          "☦️",
         ],
         flags: ["🏁", "🚩", "🎌", "🏴", "🏳️", "🏳️‍🌈", "🏳️‍⚧️", "🏴‍☠️"],
       };
@@ -1804,11 +2203,18 @@
         unsubTyping = null;
       const watchedPresence = new Set();
       let typingTimeout = null;
+      let typingHideTimer = null;
       let actionMenuMsgId = null;
       let fvMediaList = [],
         fvIndex = 0;
       let currentWallpaperUrl = "";
-      let wallpaperSliderState = { blur: 0, bright: 100, overlay: 0, opacity: 100 };
+      let wallpaperSliderState = {
+        blur: 0,
+        bright: 100,
+        overlay: 0,
+        opacity: 100,
+      };
+      let pinnedBarIndex = 0;
 
       // ========== PAGE REFERENCES ==========
       const listPage = document.getElementById("chatListPage");
@@ -1827,12 +2233,20 @@
           yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         if (date.toDateString() === today.toDateString()) return "Today";
-        if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-        return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+        if (date.toDateString() === yesterday.toDateString())
+          return "Yesterday";
+        return date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
       }
 
       function avatarUrl(p) {
-        return p.photoURL || `https://api.dicebear.com/7.x/notionists/svg?seed=${p.uid}`;
+        return (
+          p.photoURL ||
+          `https://api.dicebear.com/7.x/notionists/svg?seed=${p.uid}`
+        );
       }
 
       function openSheet(scrimId, sheetId) {
@@ -1846,9 +2260,11 @@
       document.querySelectorAll(".sheet-scrim").forEach((scrim) => {
         scrim.addEventListener("click", () => {
           scrim.classList.remove("open");
-          document.querySelectorAll(".bottom-sheet.open, .action-sheet.open").forEach((s) => {
-            // Only close sheets tied to this scrim by proximity in DOM order — simplest: close all
-          });
+          document
+            .querySelectorAll(".bottom-sheet.open, .action-sheet.open")
+            .forEach((s) => {
+              // Only close sheets tied to this scrim by proximity in DOM order — simplest: close all
+            });
           document.getElementById("mediaPicker").classList.remove("open");
           document.getElementById("wallpaperSheet").classList.remove("open");
           document.getElementById("actionSheet").classList.remove("open");
@@ -1866,7 +2282,9 @@
         const skel = document.getElementById("convSkeleton");
         if (!conversationsLoaded) {
           skel.innerHTML = Array(5)
-            .fill(`<div class="skeleton-item" style="height:60px; margin:8px 16px;"></div>`)
+            .fill(
+              `<div class="skeleton-item" style="height:60px; margin:8px 16px;"></div>`,
+            )
             .join("");
           skel.classList.remove("hidden");
         } else {
@@ -1882,7 +2300,10 @@
           const other = otherParticipant(c);
           return (other.username || "").toLowerCase().includes(f);
         });
-        emptyState.classList.toggle("hidden", !(conversationsLoaded && filtered.length === 0));
+        emptyState.classList.toggle(
+          "hidden",
+          !(conversationsLoaded && filtered.length === 0),
+        );
         const pinned = filtered.filter((c) => pinnedChats.has(c.id));
         const unpinned = filtered.filter((c) => !pinnedChats.has(c.id));
         const sorted = [...pinned, ...unpinned];
@@ -1890,9 +2311,15 @@
           .map((c, i) => {
             const other = otherParticipant(c);
             const unread = c.unread?.[user.uid] || 0;
-            const pin = pinnedChats.has(c.id) ? '<span class="pin-icon">📌</span>' : "";
+            const pin = pinnedChats.has(c.id)
+              ? '<span class="pin-icon">📌</span>'
+              : "";
             const lastMine = c.lastSenderId === user.uid;
-            const tick = lastMine ? (c.lastRead ? '<span class="tick read">✓✓</span>' : '<span class="tick">✓</span>') : "";
+            const tick = lastMine
+              ? c.lastRead
+                ? '<span class="tick read">✓✓</span>'
+                : '<span class="tick">✓</span>'
+              : "";
             return `
       <div class="conv-item" style="animation-delay:${i * 0.03}s" data-conv="${c.id}" data-other="${other.uid}" data-name="${escapeHtml(other.username || "")}">
         <div class="avatar-wrap">
@@ -1915,40 +2342,59 @@
             openChat(el.dataset.conv, el.dataset.other, el.dataset.name);
           });
           let pressTimer;
-          el.addEventListener("touchstart", () => {
-            pressTimer = setTimeout(() => {
-              const id = el.dataset.conv;
-              pinnedChats.has(id) ? pinnedChats.delete(id) : pinnedChats.add(id);
-              LS.set("mn_pinnedChats", [...pinnedChats]);
-              renderConvList(document.getElementById("convSearch").value);
-              showToast(pinnedChats.has(id) ? "Pinned" : "Unpinned");
-            }, 550);
-          }, { passive: true });
+          el.addEventListener(
+            "touchstart",
+            () => {
+              pressTimer = setTimeout(() => {
+                const id = el.dataset.conv;
+                pinnedChats.has(id)
+                  ? pinnedChats.delete(id)
+                  : pinnedChats.add(id);
+                LS.set("mn_pinnedChats", [...pinnedChats]);
+                renderConvList(document.getElementById("convSearch").value);
+                showToast(pinnedChats.has(id) ? "Pinned" : "Unpinned");
+              }, 550);
+            },
+            { passive: true },
+          );
           el.addEventListener("touchend", () => clearTimeout(pressTimer));
           el.addEventListener("touchmove", () => clearTimeout(pressTimer));
         });
       }
 
-    const presenceCache = new Map(); // otherUid -> raw lastActive value
+      const presenceCache = new Map(); // otherUid -> raw lastActive value
 
-function updatePresenceUI(otherUid, lastActiveRaw) {
-  const online = isOnline(lastActiveRaw);
-  document.querySelectorAll(`[data-presence="${otherUid}"]`).forEach((dot) => {
-    dot.classList.toggle("online", online);
-  });
-  if (activeConvId && activeOtherUid === otherUid) {
-    const chatDot = document.getElementById("chatStatusDot");
-    if (chatDot) chatDot.classList.toggle("online", online);
-    const statusText = document.getElementById("chatStatusText");
-    if (statusText && !statusText.classList.contains("typing")) {
-      statusText.textContent = online
-        ? "Online"
-        : lastActiveRaw
-          ? "last seen " + relativeTime(lastActiveRaw.toDate ? lastActiveRaw.toDate() : lastActiveRaw)
-          : "Offline";
-    }
-  }
-}
+      function updatePresenceUI(otherUid, lastActiveRaw) {
+        const online = isOnline(lastActiveRaw);
+        document
+          .querySelectorAll(`[data-presence="${otherUid}"]`)
+          .forEach((dot) => {
+            dot.classList.toggle("online", online);
+          });
+        if (activeConvId && activeOtherUid === otherUid) {
+          const chatDot = document.getElementById("chatStatusDot");
+          if (chatDot) chatDot.classList.toggle("online", online);
+          const statusText = document.getElementById("chatStatusText");
+          if (statusText) {
+            if (!online) {
+              statusText.classList.remove("typing");
+              document.getElementById("typingRow")?.classList.add("hidden");
+            }
+            if (!statusText.classList.contains("typing")) {
+              statusText.textContent = online
+                ? "Online"
+                : lastActiveRaw
+                  ? "last seen " +
+                    relativeTime(
+                      lastActiveRaw.toDate
+                        ? lastActiveRaw.toDate()
+                        : lastActiveRaw,
+                    )
+                  : "Offline";
+            }
+          }
+        }
+      }
 
       function watchPresence() {
         conversations.forEach((c) => {
@@ -1967,7 +2413,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       // Re‑evaluate every 5s so status flips automatically
       setInterval(() => {
-        presenceCache.forEach((lastActiveRaw, otherUid) => updatePresenceUI(otherUid, lastActiveRaw));
+        presenceCache.forEach((lastActiveRaw, otherUid) =>
+          updatePresenceUI(otherUid, lastActiveRaw),
+        );
       }, 5000);
 
       listenConversations(user.uid, (convs) => {
@@ -2009,8 +2457,12 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         listPage.classList.add("hidden");
         chatPage.classList.add("hidden");
         profilePage.classList.remove("hidden");
-        document.getElementById("profileUsername").value = profile.username || "";
-        document.getElementById("profileAvatarImg").src = avatarUrl({ uid: user.uid, photoURL: profile.photoURL });
+        document.getElementById("profileUsername").value =
+          profile.username || "";
+        document.getElementById("profileAvatarImg").src = avatarUrl({
+          uid: user.uid,
+          photoURL: profile.photoURL,
+        });
       }
 
       window.addEventListener("popstate", () => {
@@ -2021,8 +2473,12 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         showList();
         history.back();
       });
-      document.getElementById("profileBtn").addEventListener("click", showProfilePage);
-      document.getElementById("closeProfileBtn").addEventListener("click", showList);
+      document
+        .getElementById("profileBtn")
+        .addEventListener("click", showProfilePage);
+      document
+        .getElementById("closeProfileBtn")
+        .addEventListener("click", showList);
 
       // ========== OPEN CHAT ==========
       async function openChat(convId, otherUid, otherName) {
@@ -2035,9 +2491,14 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         activeConvId = convId;
         activeOtherUid = otherUid;
         activeOtherName = otherName;
+        pinnedBarIndex = 0;
+        clearTimeout(typingHideTimer);
+        document.getElementById("typingRow").classList.add("hidden");
+        document.getElementById("chatStatusText").classList.remove("typing");
         localStorage.setItem("maison_lastChat", convId);
         document.getElementById("chatName").textContent = otherName;
-        document.getElementById("chatAvatar").src = `https://api.dicebear.com/7.x/notionists/svg?seed=${otherUid}`;
+        document.getElementById("chatAvatar").src =
+          `https://api.dicebear.com/7.x/notionists/svg?seed=${otherUid}`;
         document.getElementById("chatStatusText").classList.remove("typing");
         // Apply cached presence immediately so the header never shows blank/stale
         if (presenceCache.has(otherUid)) {
@@ -2053,7 +2514,10 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         currentWallpaperUrl = "";
         if (convSnap.exists()) {
           const convData = convSnap.data();
-          applyWallpaperToChatBody(convData.wallpaper || "", convData.wallpaperSettings || {});
+          applyWallpaperToChatBody(
+            convData.wallpaper || "",
+            convData.wallpaperSettings || {},
+          );
         }
 
         const q = query(
@@ -2095,12 +2559,26 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         unsubTyping = listenTyping(convId, otherUid, (isTyping) => {
           const row = document.getElementById("typingRow");
           const statusText = document.getElementById("chatStatusText");
-          row.innerHTML = isTyping ? '<div class="typing-indicator"><span></span><span></span><span></span></div>' : "";
+          clearTimeout(typingHideTimer);
           if (isTyping) {
+            const wasAtBottom =
+              chatBody.scrollTop + chatBody.clientHeight >=
+              chatBody.scrollHeight - 80;
+            row.classList.remove("hidden");
             statusText.textContent = "typing…";
             statusText.classList.add("typing");
+            if (wasAtBottom) chatBody.scrollTop = chatBody.scrollHeight;
+            typingHideTimer = setTimeout(() => {
+              row.classList.add("hidden");
+              statusText.classList.remove("typing");
+              if (presenceCache.has(otherUid))
+                updatePresenceUI(otherUid, presenceCache.get(otherUid));
+            }, 6000);
           } else {
+            row.classList.add("hidden");
             statusText.classList.remove("typing");
+            if (presenceCache.has(otherUid))
+              updatePresenceUI(otherUid, presenceCache.get(otherUid));
           }
         });
       }
@@ -2113,7 +2591,8 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       // client sees it flip from ✓ to ✓✓ in real time.
       async function markMessagesReadByMe(convId, msgs) {
         const toMark = msgs.filter(
-          (m) => m.senderId !== user.uid && !(m.readBy || []).includes(user.uid),
+          (m) =>
+            m.senderId !== user.uid && !(m.readBy || []).includes(user.uid),
         );
         if (!toMark.length) return;
         try {
@@ -2131,7 +2610,8 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       // ========== MESSAGES RENDERING ==========
       function messageContentHtml(m, metaHtml = "") {
-        if (m.deleted) return `<div class="msg-text">This message was deleted${metaHtml}</div>`;
+        if (m.deleted)
+          return `<div class="msg-text">This message was deleted${metaHtml}</div>`;
         if (m.type === "image")
           return `<div class="msg-media"><img src="${m.fileUrl}" data-msg="${m.id}" alt="photo"></div>`;
         if (m.type === "video")
@@ -2139,8 +2619,12 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         if (m.type === "audio")
           return `<audio src="${m.fileUrl}" controls style="max-width:220px"></audio>`;
         if (m.type === "file") {
-          const icon = typeof fileIcon === "function" ? fileIcon(m.fileName || "") : "📎";
-          const size = m.fileSize && typeof formatBytes === "function" ? formatBytes(m.fileSize) : "";
+          const icon =
+            typeof fileIcon === "function" ? fileIcon(m.fileName || "") : "📎";
+          const size =
+            m.fileSize && typeof formatBytes === "function"
+              ? formatBytes(m.fileSize)
+              : "";
           return `<a class="msg-file" href="${m.fileUrl}" download="${escapeHtml(m.fileName || "file")}">
             <span class="file-icon">${icon}</span>
             <span><div>${escapeHtml(m.fileName || "Attachment")}</div><div class="file-meta">${size}</div></span>
@@ -2150,7 +2634,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
 
       function renderMessages() {
-        const wasAtBottom = chatBody.scrollTop + chatBody.clientHeight >= chatBody.scrollHeight - 80;
+        const wasAtBottom =
+          chatBody.scrollTop + chatBody.clientHeight >=
+          chatBody.scrollHeight - 80;
         const pinnedIds = getPinnedMsgIds(activeConvId);
         const starredIds = getStarredMsgIds(activeConvId);
         let html = "",
@@ -2165,21 +2651,33 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           const mine = m.senderId === user.uid;
           const time = msgDate ? formatTime(msgDate) : "…";
           const readClass = mine && m.readBy?.length > 1 ? "read" : "";
-          const editedTag = m.edited ? '<span class="edited-tag">edited</span>' : "";
-          const pinFlag = pinnedIds.has(m.id) ? '<span class="pin-flag">📌</span>' : "";
-          const starFlag = starredIds.has(m.id) ? '<span class="star-flag">⭐</span>' : "";
+          const editedTag = m.edited
+            ? '<span class="edited-tag">edited</span>'
+            : "";
+          const pinFlag = pinnedIds.has(m.id)
+            ? '<span class="pin-flag">📌</span>'
+            : "";
+          const starFlag = starredIds.has(m.id)
+            ? '<span class="star-flag">⭐</span>'
+            : "";
           const statusTicks = `<span class="msg-status ${readClass}">${mine ? (m.readBy?.length > 1 ? "✓✓" : "✓") : ""}</span>`;
           const metaInner = `${pinFlag}${starFlag}${editedTag}<span>${time}</span>${statusTicks}`;
 
           // Text/deleted bubbles: meta floats INSIDE the text (WhatsApp-style)
           // Media/file/audio bubbles: unchanged block row below the content
           const isTextLike = m.deleted || m.type === "text" || !m.type;
-          const inlineMetaHtml = isTextLike ? `<span class="msg-text-inline-meta">${metaInner}</span>` : "";
-          const blockMetaHtml = isTextLike ? "" : `<div class="msg-meta">${metaInner}</div>`;
+          const inlineMetaHtml = isTextLike
+            ? `<span class="msg-text-inline-meta">${metaInner}</span>`
+            : "";
+          const blockMetaHtml = isTextLike
+            ? ""
+            : `<div class="msg-meta">${metaInner}</div>`;
 
           let content = messageContentHtml(m, inlineMetaHtml);
           if (m.replyTo && !m.deleted)
-            content = `<div class="reply-quote" data-jump="${m.replyTo.id || ""}">${escapeHtml(m.replyTo.text || "Attachment")}</div>` + content;
+            content =
+              `<div class="reply-quote" data-jump="${m.replyTo.id || ""}">${escapeHtml(m.replyTo.text || "Attachment")}</div>` +
+              content;
           let reactionsHtml = "";
           if (m.reactions && Object.keys(m.reactions).length) {
             const reactionStr = Object.entries(m.reactions)
@@ -2198,16 +2696,58 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
               </div>
             </div>`;
         });
-        chatBody.innerHTML = html;
+        document.getElementById("messagesContainer").innerHTML = html;
         if (wasAtBottom) chatBody.scrollTop = chatBody.scrollHeight;
         handleNewMessagesBtn();
         wireMessageRowEvents();
+        renderPinnedBar();
+      }
+
+      function renderPinnedBar() {
+        const bar = document.getElementById("pinnedBar");
+        const textEl = document.getElementById("pinnedBarText");
+        const countEl = document.getElementById("pinnedBarCount");
+        if (!activeConvId) {
+          bar.classList.add("hidden");
+          return;
+        }
+        const pinnedIds = [...getPinnedMsgIds(activeConvId)];
+        const pinnedMsgs = pinnedIds
+          .map((id) => currentMessages.find((m) => m.id === id))
+          .filter(Boolean);
+        if (!pinnedMsgs.length) {
+          bar.classList.add("hidden");
+          pinnedBarIndex = 0;
+          return;
+        }
+        if (pinnedBarIndex >= pinnedMsgs.length) pinnedBarIndex = 0;
+        const current = pinnedMsgs[pinnedBarIndex];
+        textEl.textContent = (current.text || "Attachment").slice(0, 80);
+        countEl.textContent =
+          pinnedMsgs.length > 1
+            ? `${pinnedBarIndex + 1}/${pinnedMsgs.length}`
+            : "";
+        bar.classList.remove("hidden");
+        bar.onclick = () => {
+          const row = document.querySelector(`[data-msg-id="${current.id}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.classList.add("reply-highlight");
+            setTimeout(() => row.classList.remove("reply-highlight"), 1200);
+          }
+          pinnedBarIndex = (pinnedBarIndex + 1) % pinnedMsgs.length;
+        };
       }
 
       function handleNewMessagesBtn() {
         const btn = document.getElementById("newMsgBtn");
-        const isAtBottom = chatBody.scrollTop + chatBody.clientHeight >= chatBody.scrollHeight - 80;
-        btn.classList.toggle("visible", !isAtBottom && currentMessages.length > 0);
+        const isAtBottom =
+          chatBody.scrollTop + chatBody.clientHeight >=
+          chatBody.scrollHeight - 80;
+        btn.classList.toggle(
+          "visible",
+          !isAtBottom && currentMessages.length > 0,
+        );
       }
       document.getElementById("newMsgBtn").addEventListener("click", () => {
         chatBody.scrollTop = chatBody.scrollHeight;
@@ -2259,7 +2799,10 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         if (activeConvId) {
           setTyping(activeConvId, true);
           clearTimeout(typingTimeout);
-          typingTimeout = setTimeout(() => setTyping(activeConvId, false), 2500);
+          typingTimeout = setTimeout(
+            () => setTyping(activeConvId, false),
+            2500,
+          );
         }
       });
       msgInput.addEventListener("keydown", (e) => {
@@ -2295,11 +2838,14 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
       function startReply(msgId, text) {
         replyTarget = { id: msgId, text };
-        document.getElementById("replyPreviewText").textContent = "Replying to: " + (text?.slice(0, 60) || "Attachment");
+        document.getElementById("replyPreviewText").textContent =
+          "Replying to: " + (text?.slice(0, 60) || "Attachment");
         document.getElementById("replyPreview").style.display = "flex";
         msgInput.focus();
       }
-      document.getElementById("cancelReplyBtn").addEventListener("click", cancelReply);
+      document
+        .getElementById("cancelReplyBtn")
+        .addEventListener("click", cancelReply);
 
       // ========== MESSAGE ROW GESTURES ==========
       function wireMessageRowEvents() {
@@ -2312,19 +2858,29 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           row.querySelectorAll(".reply-quote").forEach((rq) => {
             rq.addEventListener("click", () => {
               const target = rq.dataset.jump;
-              const targetRow = document.querySelector(`[data-msg-id="${target}"]`);
+              const targetRow = document.querySelector(
+                `[data-msg-id="${target}"]`,
+              );
               if (targetRow) {
-                targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+                targetRow.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
                 targetRow.classList.add("reply-highlight");
-                setTimeout(() => targetRow.classList.remove("reply-highlight"), 1200);
+                setTimeout(
+                  () => targetRow.classList.remove("reply-highlight"),
+                  1200,
+                );
               }
             });
           });
 
           // media click -> fullscreen viewer
-          row.querySelectorAll("img[data-msg], video[data-msg]").forEach((el) => {
-            el.addEventListener("click", () => openFullscreenViewer(msgId));
-          });
+          row
+            .querySelectorAll("img[data-msg], video[data-msg]")
+            .forEach((el) => {
+              el.addEventListener("click", () => openFullscreenViewer(msgId));
+            });
 
           // swipe right -> reply
           let touchStartX = 0,
@@ -2385,9 +2941,12 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
 
       async function quickHeartReact(msgId, row, e) {
-        await updateDoc(doc(db, "conversations", activeConvId, "messages", msgId), {
-          [`reactions.❤️`]: increment(1),
-        });
+        await updateDoc(
+          doc(db, "conversations", activeConvId, "messages", msgId),
+          {
+            [`reactions.❤️`]: increment(1),
+          },
+        );
         const burst = document.createElement("div");
         burst.className = "heart-burst";
         burst.textContent = "❤️";
@@ -2401,26 +2960,37 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         const msg = currentMessages.find((m) => m.id === msgId);
         if (!msg) return;
         const mine = msg.senderId === user.uid;
-        document.querySelectorAll("#actionSheet .action-item").forEach((btn) => {
-          const action = btn.dataset.action;
-          if (action === "edit") btn.classList.toggle("hidden", !mine || msg.type !== "text");
-          if (action === "deleteEveryone") btn.classList.toggle("hidden", !mine);
-        });
+        document
+          .querySelectorAll("#actionSheet .action-item")
+          .forEach((btn) => {
+            const action = btn.dataset.action;
+            if (action === "edit")
+              btn.classList.toggle("hidden", !mine || msg.type !== "text");
+            if (action === "deleteEveryone")
+              btn.classList.toggle("hidden", !mine);
+          });
         const row = document.getElementById("reactionRow");
         row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
           .map((e) => `<span data-emoji="${e}">${e}</span>`)
           .join("");
         row.querySelectorAll("span").forEach((s) => {
           s.onclick = async () => {
-            await updateDoc(doc(db, "conversations", activeConvId, "messages", msgId), {
-              [`reactions.${s.dataset.emoji}`]: increment(1),
-            });
+            await updateDoc(
+              doc(db, "conversations", activeConvId, "messages", msgId),
+              {
+                [`reactions.${s.dataset.emoji}`]: increment(1),
+              },
+            );
             closeSheet("actionScrim", "actionSheet");
           };
         });
         openSheet("actionScrim", "actionSheet");
       }
-      document.getElementById("actionScrim").addEventListener("click", () => closeSheet("actionScrim", "actionSheet"));
+      document
+        .getElementById("actionScrim")
+        .addEventListener("click", () =>
+          closeSheet("actionScrim", "actionSheet"),
+        );
 
       document.querySelectorAll("#actionSheet .action-item").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -2432,7 +3002,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           if (action === "reply") startReply(msg.id, msg.text);
           else if (action === "copy") {
             try {
-              await navigator.clipboard.writeText(msg.text || msg.fileUrl || "");
+              await navigator.clipboard.writeText(
+                msg.text || msg.fileUrl || "",
+              );
               showToast("Copied");
             } catch {
               showToast("Copy failed");
@@ -2441,11 +3013,17 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           else if (action === "pin") {
             togglePinnedMsg(activeConvId, msgId);
             renderMessages();
-            showToast(getPinnedMsgIds(activeConvId).has(msgId) ? "Pinned" : "Unpinned");
+            showToast(
+              getPinnedMsgIds(activeConvId).has(msgId) ? "Pinned" : "Unpinned",
+            );
           } else if (action === "star") {
             toggleStarredMsg(activeConvId, msgId);
             renderMessages();
-            showToast(getStarredMsgIds(activeConvId).has(msgId) ? "Starred" : "Unstarred");
+            showToast(
+              getStarredMsgIds(activeConvId).has(msgId)
+                ? "Starred"
+                : "Unstarred",
+            );
           } else if (action === "edit") openEditMessage(msg);
           else if (action === "info") openMessageInfo(msg);
           else if (action === "deleteMe") {
@@ -2455,10 +3033,13 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
             showToast("Deleted for you");
           } else if (action === "deleteEveryone") {
             if (confirm("Delete this message for everyone?")) {
-              await updateDoc(doc(db, "conversations", activeConvId, "messages", msgId), {
-                deleted: true,
-                text: "",
-              });
+              await updateDoc(
+                doc(db, "conversations", activeConvId, "messages", msgId),
+                {
+                  deleted: true,
+                  text: "",
+                },
+              );
             }
           }
         });
@@ -2487,9 +3068,11 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         `;
         document.getElementById("msgInfoModal").classList.add("open");
       }
-      document.getElementById("closeMsgInfoModal").addEventListener("click", () =>
-        document.getElementById("msgInfoModal").classList.remove("open"),
-      );
+      document
+        .getElementById("closeMsgInfoModal")
+        .addEventListener("click", () =>
+          document.getElementById("msgInfoModal").classList.remove("open"),
+        );
 
       async function openForwardPicker(msg) {
         const members = await listVipMembers(user.uid);
@@ -2525,15 +3108,19 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
 
       // ========== SEARCH IN CHAT ==========
-      document.getElementById("searchInChatBtn").addEventListener("click", () => {
-        document.getElementById("searchInChatBar").style.display = "flex";
-        document.getElementById("searchInChatInput").focus();
-      });
-      document.getElementById("closeSearchInChat").addEventListener("click", () => {
-        document.getElementById("searchInChatBar").style.display = "none";
-        document.getElementById("searchInChatInput").value = "";
-        renderMessages();
-      });
+      document
+        .getElementById("searchInChatBtn")
+        .addEventListener("click", () => {
+          document.getElementById("searchInChatBar").style.display = "flex";
+          document.getElementById("searchInChatInput").focus();
+        });
+      document
+        .getElementById("closeSearchInChat")
+        .addEventListener("click", () => {
+          document.getElementById("searchInChatBar").style.display = "none";
+          document.getElementById("searchInChatInput").value = "";
+          renderMessages();
+        });
       document.getElementById("searchInChatInput").addEventListener(
         "input",
         debounce((e) => {
@@ -2544,90 +3131,135 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
             renderMessages();
             return;
           }
-          const matches = currentMessages.filter((m) => (m.text || "").toLowerCase().includes(term));
-          countEl.textContent = matches.length + " match" + (matches.length === 1 ? "" : "es");
+          const matches = currentMessages.filter((m) =>
+            (m.text || "").toLowerCase().includes(term),
+          );
+          countEl.textContent =
+            matches.length + " match" + (matches.length === 1 ? "" : "es");
           renderMessages();
           document.querySelectorAll(".msg-text").forEach((el) => {
             if (el.textContent.toLowerCase().includes(term)) {
-              const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
-              el.innerHTML = el.textContent.replace(regex, '<span class="search-match">$1</span>');
+              const regex = new RegExp(
+                `(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+                "ig",
+              );
+              el.innerHTML = el.textContent.replace(
+                regex,
+                '<span class="search-match">$1</span>',
+              );
             }
           });
           if (matches.length) {
-            const firstRow = document.querySelector(`[data-msg-id="${matches[matches.length - 1].id}"]`);
+            const firstRow = document.querySelector(
+              `[data-msg-id="${matches[matches.length - 1].id}"]`,
+            );
             firstRow?.scrollIntoView({ behavior: "smooth", block: "center" });
           }
         }, 250),
       );
 
       // ========== CHAT OVERFLOW MENU ==========
-      document.getElementById("chatMenuBtn").addEventListener("click", () => openSheet("chatMenuScrim", "chatMenuSheet"));
-      document.getElementById("chatMenuScrim").addEventListener("click", () => closeSheet("chatMenuScrim", "chatMenuSheet"));
-      document.querySelectorAll("#chatMenuSheet .action-item").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const menu = btn.dataset.menu;
-          closeSheet("chatMenuScrim", "chatMenuSheet");
-          if (menu === "wallpaper") openWallpaperSheet();
-          else if (menu === "sharedMedia") openSharedMedia();
-          else if (menu === "pinnedList") openMsgListModal("pinned");
-          else if (menu === "starredList") openMsgListModal("starred");
-          else if (menu === "deleteChat") deleteActiveConversation();
+      document
+        .getElementById("chatMenuBtn")
+        .addEventListener("click", () =>
+          openSheet("chatMenuScrim", "chatMenuSheet"),
+        );
+      document
+        .getElementById("chatMenuScrim")
+        .addEventListener("click", () =>
+          closeSheet("chatMenuScrim", "chatMenuSheet"),
+        );
+      document
+        .querySelectorAll("#chatMenuSheet .action-item")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const menu = btn.dataset.menu;
+            closeSheet("chatMenuScrim", "chatMenuSheet");
+            if (menu === "wallpaper") openWallpaperSheet();
+            else if (menu === "sharedMedia") openSharedMedia();
+            else if (menu === "pinnedList") openMsgListModal("pinned");
+            else if (menu === "starredList") openMsgListModal("starred");
+            else if (menu === "deleteChat") deleteActiveConversation();
+          });
         });
-      });
 
       function openMsgListModal(kind) {
-        const ids = kind === "pinned" ? getPinnedMsgIds(activeConvId) : getStarredMsgIds(activeConvId);
-        const title = kind === "pinned" ? "Pinned Messages" : "Starred Messages";
+        const ids =
+          kind === "pinned"
+            ? getPinnedMsgIds(activeConvId)
+            : getStarredMsgIds(activeConvId);
+        const title =
+          kind === "pinned" ? "Pinned Messages" : "Starred Messages";
         document.getElementById("msgListModalTitle").textContent = title;
         const matched = currentMessages.filter((m) => ids.has(m.id));
         const body = document.getElementById("msgListModalBody");
         body.innerHTML = matched.length
           ? matched
               .map(
-                (m) => `<div class="info-row" style="cursor:pointer" data-jump="${m.id}"><span>${escapeHtml((m.text || "Attachment").slice(0, 60))}</span></div>`,
+                (m) =>
+                  `<div class="info-row" style="cursor:pointer" data-jump="${m.id}"><span>${escapeHtml((m.text || "Attachment").slice(0, 60))}</span></div>`,
               )
               .join("")
           : `<p style="color:var(--text-muted)">Nothing here yet.</p>`;
         body.querySelectorAll("[data-jump]").forEach((el) => {
           el.addEventListener("click", () => {
             document.getElementById("msgListModal").classList.remove("open");
-            const row = document.querySelector(`[data-msg-id="${el.dataset.jump}"]`);
+            const row = document.querySelector(
+              `[data-msg-id="${el.dataset.jump}"]`,
+            );
             row?.scrollIntoView({ behavior: "smooth", block: "center" });
           });
         });
         document.getElementById("msgListModal").classList.add("open");
       }
-      document.getElementById("closeMsgListModal").addEventListener("click", () =>
-        document.getElementById("msgListModal").classList.remove("open"),
-      );
+      document
+        .getElementById("closeMsgListModal")
+        .addEventListener("click", () =>
+          document.getElementById("msgListModal").classList.remove("open"),
+        );
 
       function openSharedMedia() {
-        const media = currentMessages.filter((m) => ["image", "video", "file"].includes(m.type) && !m.deleted);
+        const media = currentMessages.filter(
+          (m) => ["image", "video", "file"].includes(m.type) && !m.deleted,
+        );
         const body = document.getElementById("sharedMediaBody");
         body.innerHTML = media.length
           ? `<div class="shared-media-grid">${media
               .map((m) => {
-                if (m.type === "image") return `<img src="${m.fileUrl}" data-msg="${m.id}">`;
-                if (m.type === "video") return `<video src="${m.fileUrl}" data-msg="${m.id}"></video>`;
+                if (m.type === "image")
+                  return `<img src="${m.fileUrl}" data-msg="${m.id}">`;
+                if (m.type === "video")
+                  return `<video src="${m.fileUrl}" data-msg="${m.id}"></video>`;
                 return `<a class="msg-file" href="${m.fileUrl}" download style="aspect-ratio:1;background:var(--surface-2);border-radius:8px;justify-content:center">📎</a>`;
               })
               .join("")}</div>`
           : `<p style="color:var(--text-muted)">No shared media yet.</p>`;
-        body.querySelectorAll("img[data-msg], video[data-msg]").forEach((el) => {
-          el.addEventListener("click", () => {
-            document.getElementById("sharedMediaModal").classList.remove("open");
-            openFullscreenViewer(el.dataset.msg);
+        body
+          .querySelectorAll("img[data-msg], video[data-msg]")
+          .forEach((el) => {
+            el.addEventListener("click", () => {
+              document
+                .getElementById("sharedMediaModal")
+                .classList.remove("open");
+              openFullscreenViewer(el.dataset.msg);
+            });
           });
-        });
         document.getElementById("sharedMediaModal").classList.add("open");
       }
-      document.getElementById("closeSharedMediaModal").addEventListener("click", () =>
-        document.getElementById("sharedMediaModal").classList.remove("open"),
-      );
+      document
+        .getElementById("closeSharedMediaModal")
+        .addEventListener("click", () =>
+          document.getElementById("sharedMediaModal").classList.remove("open"),
+        );
 
       async function deleteActiveConversation() {
         if (!confirm("Delete this conversation permanently?")) return;
-        const messagesRef = collection(db, "conversations", activeConvId, "messages");
+        const messagesRef = collection(
+          db,
+          "conversations",
+          activeConvId,
+          "messages",
+        );
         const snapshot = await getDocs(messagesRef);
         const batch = writeBatch(db);
         snapshot.forEach((d) => batch.delete(d.ref));
@@ -2639,7 +3271,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       // ========== FULLSCREEN MEDIA VIEWER ==========
       function openFullscreenViewer(msgId) {
-        fvMediaList = currentMessages.filter((m) => ["image", "video"].includes(m.type) && !m.deleted);
+        fvMediaList = currentMessages.filter(
+          (m) => ["image", "video"].includes(m.type) && !m.deleted,
+        );
         fvIndex = fvMediaList.findIndex((m) => m.id === msgId);
         if (fvIndex === -1) return;
         renderFvContent();
@@ -2666,7 +3300,10 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           startX = 0,
           startY = 0;
         function dist(t) {
-          return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+          return Math.hypot(
+            t[0].clientX - t[1].clientX,
+            t[0].clientY - t[1].clientY,
+          );
         }
         img.addEventListener("touchstart", (e) => {
           if (e.touches.length === 2) {
@@ -2683,7 +3320,10 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           if (e.touches.length === 2) {
             e.preventDefault();
             const newDist = dist(e.touches);
-            scale = Math.min(Math.max(startScale * (newDist / startDist), 1), 4);
+            scale = Math.min(
+              Math.max(startScale * (newDist / startDist), 1),
+              4,
+            );
             img.style.transform = `scale(${scale}) translate(${panX}px, ${panY}px)`;
           } else if (e.touches.length === 1 && scale > 1) {
             panX = startPanX + (e.touches[0].clientX - startX) / scale;
@@ -2714,34 +3354,57 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         fvIndex = (fvIndex + dir + fvMediaList.length) % fvMediaList.length;
         renderFvContent();
       }
-      document.getElementById("fvPrev").addEventListener("click", () => fvNav(-1));
-      document.getElementById("fvNext").addEventListener("click", () => fvNav(1));
-      document.getElementById("fvClose").addEventListener("click", () =>
-        document.getElementById("fullscreenViewer").classList.remove("open"),
-      );
+      document
+        .getElementById("fvPrev")
+        .addEventListener("click", () => fvNav(-1));
+      document
+        .getElementById("fvNext")
+        .addEventListener("click", () => fvNav(1));
+      document
+        .getElementById("fvClose")
+        .addEventListener("click", () =>
+          document.getElementById("fullscreenViewer").classList.remove("open"),
+        );
 
       // ========== ATTACHMENTS (file + camera) ==========
-      document.getElementById("attachBtn").addEventListener("click", () => document.getElementById("fileInput").click());
-      document.getElementById("cameraBtn").addEventListener("click", () => document.getElementById("cameraInput").click());
-      document.getElementById("fileInput").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        e.target.value = "";
-        if (!file) return;
-        await sendFileMessage(file);
-      });
-      document.getElementById("cameraInput").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        e.target.value = "";
-        if (!file) return;
-        await sendFileMessage(file);
-      });
+      document
+        .getElementById("attachBtn")
+        .addEventListener("click", () =>
+          document.getElementById("fileInput").click(),
+        );
+      document
+        .getElementById("cameraBtn")
+        .addEventListener("click", () =>
+          document.getElementById("cameraInput").click(),
+        );
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          e.target.value = "";
+          if (!file) return;
+          await sendFileMessage(file);
+        });
+      document
+        .getElementById("cameraInput")
+        .addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          e.target.value = "";
+          if (!file) return;
+          await sendFileMessage(file);
+        });
       async function sendFileMessage(file) {
         const dataUrl = await readFileAsDataURL(file);
         let type = "file";
         if (file.type.startsWith("image/")) type = "image";
         else if (file.type.startsWith("video/")) type = "video";
         else if (file.type.startsWith("audio/")) type = "audio";
-        const msg = { type, fileUrl: dataUrl, fileName: file.name, fileSize: file.size };
+        const msg = {
+          type,
+          fileUrl: dataUrl,
+          fileName: file.name,
+          fileSize: file.size,
+        };
         if (replyTarget) {
           msg.replyTo = { id: replyTarget.id, text: replyTarget.text };
           cancelReply();
@@ -2761,7 +3424,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       async function startRecording() {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
           mediaRecorder = new MediaRecorder(stream);
           audioChunks = [];
           recCancelled = false;
@@ -2772,7 +3437,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
             clearInterval(recTimerInterval);
             voiceRecUi.classList.remove("active");
             if (recCancelled) return;
-            const blob = new Blob(audioChunks, { type: "audio/ogg; codecs=opus" });
+            const blob = new Blob(audioChunks, {
+              type: "audio/ogg; codecs=opus",
+            });
             const dataUrl = await readFileAsDataURL(blob);
             await sendMessage(activeConvId, activeOtherUid, {
               type: "audio",
@@ -2787,7 +3454,8 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
           recHint.textContent = "◀ Slide to cancel";
           recTimerInterval = setInterval(() => {
             const s = Math.floor((Date.now() - recStartTime) / 1000);
-            document.getElementById("recTimer").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+            document.getElementById("recTimer").textContent =
+              `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
           }, 300);
         } catch {
           showToast("Microphone permission denied");
@@ -2795,16 +3463,21 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
       function stopRecording(cancel = false) {
         recCancelled = cancel;
-        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+        if (mediaRecorder && mediaRecorder.state !== "inactive")
+          mediaRecorder.stop();
       }
 
       let vTouchStartX = 0,
         vTouchStartY = 0;
-      voiceBtn.addEventListener("touchstart", (e) => {
-        vTouchStartX = e.touches[0].clientX;
-        vTouchStartY = e.touches[0].clientY;
-        startRecording();
-      }, { passive: true });
+      voiceBtn.addEventListener(
+        "touchstart",
+        (e) => {
+          vTouchStartX = e.touches[0].clientX;
+          vTouchStartY = e.touches[0].clientY;
+          startRecording();
+        },
+        { passive: true },
+      );
       voiceBtn.addEventListener("touchmove", (e) => {
         if (!mediaRecorder || mediaRecorder.state === "inactive") return;
         const dx = e.touches[0].clientX - vTouchStartX;
@@ -2827,32 +3500,51 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       // ========== MEDIA PICKER (Emoji + GIF) ==========
       const mediaPicker = document.getElementById("mediaPicker");
-      document.getElementById("mediaPickerBtn").addEventListener("click", () => {
-        const isOpen = mediaPicker.classList.contains("open");
-        if (isOpen) {
-          closeSheet("mediaPickerScrim", "mediaPicker");
-        } else {
-          openSheet("mediaPickerScrim", "mediaPicker");
-          renderEmojiGrid();
-          renderRecentEmojis();
-          if (GIPHY_API_KEY && GIPHY_API_KEY !== "YOUR_GIPHY_API_KEY") fetchTrendingGifs();
-        }
-      });
-
-      document.querySelectorAll("#mediaPicker .picker-tabs > .picker-tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll("#mediaPicker .picker-tabs > .picker-tab").forEach((t) => t.classList.remove("active"));
-          tab.classList.add("active");
-          const target = tab.dataset.tab;
-          document.getElementById("emojiContent").classList.toggle("hidden", target !== "emoji");
-          document.getElementById("gifContent").classList.toggle("hidden", target !== "gif");
-          if (target === "gif") fetchTrendingGifs();
+      document
+        .getElementById("mediaPickerBtn")
+        .addEventListener("click", () => {
+          const isOpen = mediaPicker.classList.contains("open");
+          if (isOpen) {
+            closeSheet("mediaPickerScrim", "mediaPicker");
+          } else {
+            openSheet("mediaPickerScrim", "mediaPicker");
+            renderEmojiGrid();
+            renderRecentEmojis();
+            if (GIPHY_API_KEY && GIPHY_API_KEY !== "YOUR_GIPHY_API_KEY")
+              fetchTrendingGifs();
+          }
         });
-      });
+
+      document
+        .querySelectorAll("#mediaPicker .picker-tabs > .picker-tab")
+        .forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document
+              .querySelectorAll("#mediaPicker .picker-tabs > .picker-tab")
+              .forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            const target = tab.dataset.tab;
+            document
+              .getElementById("emojiContent")
+              .classList.toggle("hidden", target !== "emoji");
+            document
+              .getElementById("gifContent")
+              .classList.toggle("hidden", target !== "gif");
+            if (target === "gif") fetchTrendingGifs();
+          });
+        });
 
       function insertEmoji(emoji) {
-        msgInput.value += emoji;
+        const start = msgInput.selectionStart ?? msgInput.value.length;
+        const end = msgInput.selectionEnd ?? msgInput.value.length;
+        msgInput.value =
+          msgInput.value.slice(0, start) + emoji + msgInput.value.slice(end);
+        const newPos = start + emoji.length;
+        msgInput.setSelectionRange(newPos, newPos);
         msgInput.dispatchEvent(new Event("input"));
+        requestAnimationFrame(() => {
+          msgInput.scrollTop = msgInput.scrollHeight;
+        });
         recentEmojis.unshift(emoji);
         LS.set("mn_recentEmojis", [...new Set(recentEmojis)].slice(0, 24));
         renderRecentEmojis();
@@ -2888,9 +3580,13 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
 
       async function fetchTrendingGifs() {
         const grid = document.getElementById("gifGrid");
-        grid.innerHTML = Array(9).fill('<div class="gif-skeleton"></div>').join("");
+        grid.innerHTML = Array(9)
+          .fill('<div class="gif-skeleton"></div>')
+          .join("");
         try {
-          const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=15`);
+          const res = await fetch(
+            `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=15`,
+          );
           const json = await res.json();
           renderGifGrid(json.data);
         } catch {
@@ -2900,12 +3596,19 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       function renderGifGrid(gifs) {
         const grid = document.getElementById("gifGrid");
         grid.innerHTML = gifs
-          .map((g) => `<img src="${g.images.fixed_height_small.url}" data-url="${g.images.original.url}">`)
+          .map(
+            (g) =>
+              `<img src="${g.images.fixed_height_small.url}" data-url="${g.images.original.url}">`,
+          )
           .join("");
         grid.querySelectorAll("img").forEach((img) =>
           img.addEventListener("click", async () => {
             const url = img.dataset.url;
-            await sendMessage(activeConvId, activeOtherUid, { type: "image", fileUrl: url, fileName: "gif" });
+            await sendMessage(activeConvId, activeOtherUid, {
+              type: "image",
+              fileUrl: url,
+              fileName: "gif",
+            });
             recentGifs.unshift(url);
             LS.set("mn_recentGifs", [...new Set(recentGifs)].slice(0, 24));
             closeSheet("mediaPickerScrim", "mediaPicker");
@@ -2914,17 +3617,25 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
       document.querySelectorAll("#gifCatTabs .picker-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-          document.querySelectorAll("#gifCatTabs .picker-tab").forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll("#gifCatTabs .picker-tab")
+            .forEach((t) => t.classList.remove("active"));
           tab.classList.add("active");
           if (tab.dataset.cat === "recent") {
             const grid = document.getElementById("gifGrid");
             const recents = LS.get("mn_recentGifs", []);
             grid.innerHTML = recents.length
-              ? recents.map((url) => `<img src="${url}" data-url="${url}">`).join("")
+              ? recents
+                  .map((url) => `<img src="${url}" data-url="${url}">`)
+                  .join("")
               : `<p style="color:var(--text-muted)">No recent GIFs yet.</p>`;
             grid.querySelectorAll("img").forEach((img) =>
               img.addEventListener("click", async () => {
-                await sendMessage(activeConvId, activeOtherUid, { type: "image", fileUrl: img.dataset.url, fileName: "gif" });
+                await sendMessage(activeConvId, activeOtherUid, {
+                  type: "image",
+                  fileUrl: img.dataset.url,
+                  fileName: "gif",
+                });
                 closeSheet("mediaPickerScrim", "mediaPicker");
               }),
             );
@@ -2938,7 +3649,9 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         debounce(async (e) => {
           const term = e.target.value;
           if (!term) return fetchTrendingGifs();
-          const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(term)}&limit=15`);
+          const res = await fetch(
+            `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(term)}&limit=15`,
+          );
           const json = await res.json();
           renderGifGrid(json.data);
         }, 300),
@@ -2947,14 +3660,23 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       // ========== WALLPAPER ==========
       function applyWallpaperToChatBody(url, settings = {}) {
         currentWallpaperUrl = url || "";
-        const s = { blur: 0, bright: 100, overlay: 0, opacity: 100, ...settings };
+        const s = {
+          blur: 0,
+          bright: 100,
+          overlay: 0,
+          opacity: 100,
+          ...settings,
+        };
         wallpaperSliderState = s;
         if (url) {
           chatBody.style.backgroundImage = `url(${url})`;
           chatBody.classList.add("wallpaper-blur");
           chatBody.style.filter = `blur(${s.blur}px) brightness(${s.bright}%)`;
           chatBody.style.opacity = s.opacity / 100;
-          chatBody.style.setProperty("--wallpaper-overlay", `rgba(0,0,0,${s.overlay / 100})`);
+          chatBody.style.setProperty(
+            "--wallpaper-overlay",
+            `rgba(0,0,0,${s.overlay / 100})`,
+          );
         } else {
           chatBody.style.backgroundImage = "";
           chatBody.classList.remove("wallpaper-blur");
@@ -2967,14 +3689,22 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       function openWallpaperSheet() {
         renderWallpaperGrid("presets");
         updateWallpaperPreview(currentWallpaperUrl);
-        document.getElementById("blurSlider").value = wallpaperSliderState.blur ?? 0;
-        document.getElementById("brightSlider").value = wallpaperSliderState.bright ?? 100;
-        document.getElementById("overlaySlider").value = wallpaperSliderState.overlay ?? 0;
-        document.getElementById("opacitySlider").value = wallpaperSliderState.opacity ?? 100;
+        document.getElementById("blurSlider").value =
+          wallpaperSliderState.blur ?? 0;
+        document.getElementById("brightSlider").value =
+          wallpaperSliderState.bright ?? 100;
+        document.getElementById("overlaySlider").value =
+          wallpaperSliderState.overlay ?? 0;
+        document.getElementById("opacitySlider").value =
+          wallpaperSliderState.opacity ?? 100;
         updateSliderLabels();
         openSheet("wallpaperScrim", "wallpaperSheet");
       }
-      document.getElementById("wallpaperScrim").addEventListener("click", () => closeSheet("wallpaperScrim", "wallpaperSheet"));
+      document
+        .getElementById("wallpaperScrim")
+        .addEventListener("click", () =>
+          closeSheet("wallpaperScrim", "wallpaperSheet"),
+        );
 
       function updateWallpaperPreview(url) {
         const preview = document.getElementById("wallpaperPreview");
@@ -2994,15 +3724,29 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         overlay.style.background = `rgba(0,0,0,${overlayVal / 100})`;
       }
       function updateSliderLabels() {
-        document.getElementById("blurVal").textContent = document.getElementById("blurSlider").value + "px";
-        document.getElementById("brightVal").textContent = document.getElementById("brightSlider").value + "%";
-        document.getElementById("overlayVal").textContent = document.getElementById("overlaySlider").value + "%";
-        document.getElementById("opacityVal").textContent = document.getElementById("opacitySlider").value + "%";
+        document.getElementById("blurVal").textContent =
+          document.getElementById("blurSlider").value + "px";
+        document.getElementById("brightVal").textContent =
+          document.getElementById("brightSlider").value + "%";
+        document.getElementById("overlayVal").textContent =
+          document.getElementById("overlaySlider").value + "%";
+        document.getElementById("opacityVal").textContent =
+          document.getElementById("opacitySlider").value + "%";
         applyPreviewFilters();
       }
-      ["blurSlider", "brightSlider", "overlaySlider", "opacitySlider"].forEach((id) => {
-        document.getElementById(id).addEventListener("input", updateSliderLabels);
-      });
+      ["blurSlider", "brightSlider", "overlaySlider", "opacitySlider"].forEach(
+        (id) => {
+          document
+            .getElementById(id)
+            .addEventListener("input", updateSliderLabels);
+        },
+      );
+
+      const WALLPAPER_FALLBACK_SVG =
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(
+          `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='#1c1c1e'/><text x='50%' y='50%' fill='#6b6b6b' font-size='13' font-family='sans-serif' text-anchor='middle' dy='.3em'>Unavailable</text></svg>`,
+        );
 
       function renderWallpaperGrid(tab) {
         const grid = document.getElementById("wallpaperGrid");
@@ -3012,45 +3756,68 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
         else if (tab === "favorites") list = [...favoriteWallpapers];
         grid.innerHTML = list.length
           ? list
-              .map((url) => `<img src="${url}" class="${url === currentWallpaperUrl ? "selected" : ""}" data-url="${url}">`)
+              .map(
+                (url) =>
+                  `<img src="${url}" class="${url === currentWallpaperUrl ? "selected" : ""}" data-url="${url}">`,
+              )
               .join("")
           : `<p style="color:var(--text-muted); grid-column:1/-1">Nothing here yet.</p>`;
         grid.querySelectorAll("img").forEach((img) => {
+          img.addEventListener(
+            "error",
+            () => {
+              img.src = WALLPAPER_FALLBACK_SVG;
+            },
+            { once: true },
+          );
           img.addEventListener("click", () => {
-            grid.querySelectorAll("img").forEach((i) => i.classList.remove("selected"));
+            grid
+              .querySelectorAll("img")
+              .forEach((i) => i.classList.remove("selected"));
             img.classList.add("selected");
             currentWallpaperUrl = img.dataset.url;
             updateWallpaperPreview(currentWallpaperUrl);
           });
         });
       }
-      document.querySelectorAll('[data-wtab]').forEach((tab) => {
+      document.querySelectorAll("[data-wtab]").forEach((tab) => {
         tab.addEventListener("click", () => {
-          document.querySelectorAll('[data-wtab]').forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll("[data-wtab]")
+            .forEach((t) => t.classList.remove("active"));
           tab.classList.add("active");
           renderWallpaperGrid(tab.dataset.wtab);
         });
       });
-      document.getElementById("wallpaperFile").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const dataUrl = await readFileAsDataURL(file);
-        currentWallpaperUrl = dataUrl;
-        updateWallpaperPreview(dataUrl);
-      });
-      document.getElementById("favWallpaperBtn").addEventListener("click", () => {
-        if (!currentWallpaperUrl) return;
-        if (favoriteWallpapers.has(currentWallpaperUrl)) favoriteWallpapers.delete(currentWallpaperUrl);
-        else favoriteWallpapers.add(currentWallpaperUrl);
-        LS.set("mn_favWallpapers", [...favoriteWallpapers]);
-        showToast("Favorites updated");
-      });
-      document.getElementById("removeWallpaperBtn").addEventListener("click", async () => {
-        currentWallpaperUrl = "";
-        updateWallpaperPreview("");
-        await saveWallpaper();
-      });
-      document.getElementById("applyWallpaperBtn").addEventListener("click", saveWallpaper);
+      document
+        .getElementById("wallpaperFile")
+        .addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const dataUrl = await readFileAsDataURL(file);
+          currentWallpaperUrl = dataUrl;
+          updateWallpaperPreview(dataUrl);
+        });
+      document
+        .getElementById("favWallpaperBtn")
+        .addEventListener("click", () => {
+          if (!currentWallpaperUrl) return;
+          if (favoriteWallpapers.has(currentWallpaperUrl))
+            favoriteWallpapers.delete(currentWallpaperUrl);
+          else favoriteWallpapers.add(currentWallpaperUrl);
+          LS.set("mn_favWallpapers", [...favoriteWallpapers]);
+          showToast("Favorites updated");
+        });
+      document
+        .getElementById("removeWallpaperBtn")
+        .addEventListener("click", async () => {
+          currentWallpaperUrl = "";
+          updateWallpaperPreview("");
+          await saveWallpaper();
+        });
+      document
+        .getElementById("applyWallpaperBtn")
+        .addEventListener("click", saveWallpaper);
       async function saveWallpaper() {
         if (!activeConvId) return;
         const settings = {
@@ -3074,66 +3841,86 @@ function updatePresenceUI(otherUid, lastActiveRaw) {
       }
 
       // ========== PROFILE ==========
-      document.getElementById("profileAvatarImg").addEventListener("click", () => document.getElementById("profileAvatarFile").click());
-      document.getElementById("profileAvatarFile").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const dataUrl = await readFileAsDataURL(file);
-        document.getElementById("profileAvatarImg").src = dataUrl;
-        window.tempAvatar = dataUrl;
-      });
-      document.getElementById("saveProfileBtn").addEventListener("click", async () => {
-        const newUsername = document.getElementById("profileUsername").value.trim();
-        if (newUsername && newUsername !== profile.username) {
-          await updateDoc(doc(db, "users", user.uid), { username: newUsername });
-          profile.username = newUsername;
-        }
-        if (window.tempAvatar) {
-          await updateDoc(doc(db, "users", user.uid), { photoURL: window.tempAvatar });
-          profile.photoURL = window.tempAvatar;
-          window.tempAvatar = null;
-        }
-        showToast("Profile saved");
-        showList();
-      });
+      document
+        .getElementById("profileAvatarImg")
+        .addEventListener("click", () =>
+          document.getElementById("profileAvatarFile").click(),
+        );
+      document
+        .getElementById("profileAvatarFile")
+        .addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const dataUrl = await readFileAsDataURL(file);
+          document.getElementById("profileAvatarImg").src = dataUrl;
+          window.tempAvatar = dataUrl;
+        });
+      document
+        .getElementById("saveProfileBtn")
+        .addEventListener("click", async () => {
+          const newUsername = document
+            .getElementById("profileUsername")
+            .value.trim();
+          if (newUsername && newUsername !== profile.username) {
+            await updateDoc(doc(db, "users", user.uid), {
+              username: newUsername,
+            });
+            profile.username = newUsername;
+          }
+          if (window.tempAvatar) {
+            await updateDoc(doc(db, "users", user.uid), {
+              photoURL: window.tempAvatar,
+            });
+            profile.photoURL = window.tempAvatar;
+            window.tempAvatar = null;
+          }
+          showToast("Profile saved");
+          showList();
+        });
 
       // ========== LOGOUT ==========
-      document.getElementById("vipLogoutBtn").addEventListener("click", async () => {
-        await logOut();
-        location.href = "index.html";
-      });
+      document
+        .getElementById("vipLogoutBtn")
+        .addEventListener("click", async () => {
+          await logOut();
+          location.href = "index.html";
+        });
 
       // ========== NEW CHAT (full VIP member picker — fixed: previously always opened members[0]) ==========
-      document.getElementById("newChatBtn").addEventListener("click", async () => {
-        const body = document.getElementById("vipMemberList");
-        body.innerHTML = "Loading VIP members…";
-        document.getElementById("newChatModal").classList.add("open");
-        const members = await listVipMembers(user.uid);
-        if (!members.length) {
-          body.innerHTML = "<p>No other VIP members yet.</p>";
-          return;
-        }
-        body.innerHTML = members
-          .map(
-            (m) => `
+      document
+        .getElementById("newChatBtn")
+        .addEventListener("click", async () => {
+          const body = document.getElementById("vipMemberList");
+          body.innerHTML = "Loading VIP members…";
+          document.getElementById("newChatModal").classList.add("open");
+          const members = await listVipMembers(user.uid);
+          if (!members.length) {
+            body.innerHTML = "<p>No other VIP members yet.</p>";
+            return;
+          }
+          body.innerHTML = members
+            .map(
+              (m) => `
           <div class="vip-pick-item" data-uid="${m.uid}">
             <img class="avatar" style="width:44px;height:44px" src="${avatarUrl(m)}">
             <div>${escapeHtml(m.username || "Member")}</div>
           </div>`,
-          )
-          .join("");
-        body.querySelectorAll(".vip-pick-item").forEach((el) => {
-          el.addEventListener("click", async () => {
-            const member = members.find((m) => m.uid === el.dataset.uid);
-            const convId = await createOrGetConversation(member.uid, member);
-            document.getElementById("newChatModal").classList.remove("open");
-            openChat(convId, member.uid, member.username);
+            )
+            .join("");
+          body.querySelectorAll(".vip-pick-item").forEach((el) => {
+            el.addEventListener("click", async () => {
+              const member = members.find((m) => m.uid === el.dataset.uid);
+              const convId = await createOrGetConversation(member.uid, member);
+              document.getElementById("newChatModal").classList.remove("open");
+              openChat(convId, member.uid, member.username);
+            });
           });
         });
-      });
-      document.getElementById("closeNewChatModal").addEventListener("click", () =>
-        document.getElementById("newChatModal").classList.remove("open"),
-      );
+      document
+        .getElementById("closeNewChatModal")
+        .addEventListener("click", () =>
+          document.getElementById("newChatModal").classList.remove("open"),
+        );
 
       // Initial load
       renderSkeleton();
