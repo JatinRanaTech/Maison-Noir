@@ -4174,10 +4174,13 @@ if (history.state && history.state.page === "chat") {
             showToast("Couldn't process that image");
           }
         });
+        
       document.getElementById("saveProfileBtn").addEventListener("click", async () => {
-    const updates = {};
-  if (newUsername && newUsername !== profile.username) updates.username = newUsername;
-  if (newPhoto) updates.photoURL = newPhoto;
+        const newUsername = document.getElementById("profileUsername").value.trim();
+        const newPhoto = window.tempAvatar;
+        const updates = {};
+        if (newUsername && newUsername !== profile.username) updates.username = newUsername;
+        if (newPhoto) updates.photoURL = newPhoto;
 
   if (Object.keys(updates).length > 0) {
     try {
