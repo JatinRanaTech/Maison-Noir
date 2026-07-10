@@ -2371,6 +2371,7 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
         opacity: 100,
       };
       let pinnedBarIndex = 0;
+      let messagesMap = new Map(); // msgId -> data, merged across pagination + realtime updates
 
       // ========== PAGE REFERENCES ==========
       const listPage = document.getElementById("chatListPage");
@@ -2668,6 +2669,9 @@ updateAvatarUI(otherUid, data);
         activeOtherUid = otherUid;
         activeOtherName = otherName;
         pinnedBarIndex = 0;
+        messagesMap = new Map();
+        lastVisible = null;
+        allMessagesLoaded = false;
         clearTimeout(typingHideTimer);
         document.getElementById("typingRow").classList.add("hidden");
         document.getElementById("chatStatusText").classList.remove("typing");
@@ -2708,25 +2712,37 @@ if (history.state && history.state.page === "chat") {
           orderBy("createdAt", "desc"),
           limit(30),
         );
-        unsubMessages = onSnapshot(q, async (snap) => {
+          let firstSnapshot = true;
+          unsubMessages = onSnapshot(q, async (snap) => {
           const hidden = getHiddenIds(convId);
           let incomingFromOther = false;
           snap.docChanges().forEach((chg) => {
-            if (chg.type === "added") {
-              const d = chg.doc.data();
-              if (d.senderId !== user.uid) incomingFromOther = true;
+            const d = { id: chg.doc.id, ...chg.doc.data() };
+            if (chg.type === "removed") {
+              messagesMap.delete(d.id);
+              return;
             }
+            if (chg.type === "added" && d.senderId !== user.uid)
+              incomingFromOther = true;
+            if (hidden.has(d.id)) {
+              messagesMap.delete(d.id);
+              return;
+            }
+            messagesMap.set(d.id, d);
           });
-          if (snap.empty) {
-            currentMessages = [];
-            allMessagesLoaded = true;
-          } else {
-            currentMessages = snap.docs
-              .reverse()
-              .map((d) => ({ id: d.id, ...d.data() }))
-              .filter((m) => !hidden.has(m.id));
-            lastVisible = snap.docs[0];
+          // Only set the pagination cursor on the FIRST snapshot of this
+          // conversation. Realtime updates (reactions/read receipts/edits)
+          // must never touch it — that was the cause of the looping bug.
+          if (firstSnapshot) {
+            firstSnapshot = false;
+            if (snap.empty) allMessagesLoaded = true;
+            else lastVisible = snap.docs[snap.docs.length - 1];
           }
+          currentMessages = [...messagesMap.values()].sort(
+            (a, b) =>
+              (a.createdAt?.toMillis?.() ?? 0) -
+              (b.createdAt?.toMillis?.() ?? 0),
+          );
           renderMessages();
           markConversationRead(convId, user.uid);
           markMessagesReadByMe(convId, currentMessages);
@@ -2955,9 +2971,10 @@ if (history.state && history.state.page === "chat") {
       });
 
       // ========== LAZY LOAD OLDER ==========
-      const maybeLoadOlder = debounce(async () => {
+           const maybeLoadOlder = debounce(async () => {
         if (chatBody.scrollTop === 0 && !allMessagesLoaded && lastVisible) {
           const prevHeight = chatBody.scrollHeight;
+          const convIdAtStart = activeConvId;
           const q = query(
             collection(db, "conversations", activeConvId, "messages"),
             orderBy("createdAt", "desc"),
@@ -2965,16 +2982,21 @@ if (history.state && history.state.page === "chat") {
             limit(30),
           );
           const snap = await getDocs(q);
+          if (activeConvId !== convIdAtStart) return; // switched chats mid-fetch
           if (snap.empty) {
             allMessagesLoaded = true;
           } else {
             const hidden = getHiddenIds(activeConvId);
-            const older = snap.docs
-              .reverse()
-              .map((d) => ({ id: d.id, ...d.data() }))
-              .filter((m) => !hidden.has(m.id));
-            currentMessages = [...older, ...currentMessages];
-            lastVisible = snap.docs[0];
+            snap.docs.forEach((d) => {
+              const data = { id: d.id, ...d.data() };
+              if (!hidden.has(data.id)) messagesMap.set(data.id, data);
+            });
+            lastVisible = snap.docs[snap.docs.length - 1];
+            currentMessages = [...messagesMap.values()].sort(
+              (a, b) =>
+                (a.createdAt?.toMillis?.() ?? 0) -
+                (b.createdAt?.toMillis?.() ?? 0),
+            );
             renderMessages();
             chatBody.scrollTop = chatBody.scrollHeight - prevHeight;
           }
@@ -4111,36 +4133,69 @@ if (history.state && history.state.page === "chat") {
         .addEventListener("click", () =>
           document.getElementById("profileAvatarFile").click(),
         );
+            function resizeImageToDataUrl(file, maxDim = 300, quality = 0.82) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              let { width, height } = img;
+              if (width > height && width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else if (height >= width && height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = () => reject(new Error("bad image"));
+            img.src = reader.result;
+          };
+          reader.onerror = () => reject(new Error("bad file"));
+          reader.readAsDataURL(file);
+        });
+      }
       document
         .getElementById("profileAvatarFile")
         .addEventListener("change", async (e) => {
           const file = e.target.files[0];
+          e.target.value = "";
           if (!file) return;
-          const dataUrl = await readFileAsDataURL(file);
-          document.getElementById("profileAvatarImg").src = dataUrl;
-          window.tempAvatar = dataUrl;
+          try {
+            const dataUrl = await resizeImageToDataUrl(file);
+            document.getElementById("profileAvatarImg").src = dataUrl;
+            window.tempAvatar = dataUrl;
+          } catch {
+            showToast("Couldn't process that image");
+          }
         });
       document.getElementById("saveProfileBtn").addEventListener("click", async () => {
-  const newUsername = document.getElementById("profileUsername").value.trim();
-  const newPhoto = window.tempAvatar; // the uploaded data URL
-
-  // ---- 1. Update your own user document ----
-  const updates = {};
-  if (newUsername && newUsername !== profile.username) {
-    updates.username = newUsername;
-    profile.username = newUsername;
-  }
-  if (newPhoto) {
-    updates.photoURL = newPhoto;
-    profile.photoURL = newPhoto;
-    window.tempAvatar = null;
-  }
+    const updates = {};
+  if (newUsername && newUsername !== profile.username) updates.username = newUsername;
+  if (newPhoto) updates.photoURL = newPhoto;
 
   if (Object.keys(updates).length > 0) {
-    await updateDoc(doc(db, "users", user.uid), updates);
+    try {
+      await updateDoc(doc(db, "users", user.uid), updates);
+    } catch (err) {
+      console.error("Profile save failed:", err);
+      showToast("Save failed — image may be too large");
+      return;
+    }
+    if (updates.username) profile.username = updates.username;
+    if (updates.photoURL) {
+      profile.photoURL = updates.photoURL;
+      window.tempAvatar = null;
+    }
   }
 
   // ---- 2. Update participantInfo in every conversation you’re in ----
+
   try {
     const q = query(
       collection(db, "conversations"),
@@ -4219,9 +4274,8 @@ if (history.state && history.state.page === "chat") {
         .addEventListener("click", () =>
           document.getElementById("newChatModal").classList.remove("open"),
         );
-
-      // Initial load
-      history.replaceState({ page: "list" }, "");
+            // Initial load
+      history.pushState({ page: "list" }, "");
       renderSkeleton();
     </script>
   </body>
