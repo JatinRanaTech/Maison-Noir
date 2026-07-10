@@ -87,6 +87,9 @@
         width: 30px;
         height: 30px;
       }
+      #chatAvatar {
+        cursor: pointer;
+      }
       img,
       video {
         max-width: 100%;
@@ -873,6 +876,27 @@
       .hidden {
         display: none !important;
       }
+      .emoji-panel {
+        overflow: hidden;
+        max-height: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        transition: max-height 0.3s var(--ease);
+        flex-shrink: 0;
+      }
+      .emoji-panel.open {
+        max-height: min(42vh, 380px);
+      }
+      .emoji-panel .picker-tabs,
+      .emoji-panel .picker-content {
+        padding: 10px clamp(10px, 3vw, 16px) 0;
+      }
+      .emoji-panel .emoji-grid,
+      .emoji-panel .gif-grid {
+        max-height: calc(min(42vh, 380px) - 96px);
+        overflow-y: auto;
+        padding-bottom: 10px;
+      }
 
       .picker-tabs {
         display: flex;
@@ -1326,8 +1350,7 @@
           transition-duration: 0.001ms !important;
         }
       }
-      /* WhatsApp-style inline timestamp: floats at the end of the text so the
-        last line wraps around it, instead of it sitting on its own row. */
+      /* WhatsApp-style inline timestamp */
       .msg-text-inline-meta {
         float: right;
         display: inline-flex;
@@ -1396,58 +1419,30 @@
       .emoji-grid span:active {
         transform: scale(1.35);
       }
-      .emoji-live-preview {
-        display: flex;
-        align-items: center;
-        min-height: 40px;
-        max-height: 80px;
-        overflow-y: auto;
-        padding: 8px 14px;
-        margin-bottom: 10px;
-        background: var(--input-bg);
-        border-radius: 18px;
-        font-size: 0.92rem;
-        color: var(--text);
-        word-break: break-word;
-        white-space: pre-wrap;
-      }
       .action-item.danger i.bi-trash {
-        color: var(--text);       /* or #fff, or the light colour you prefer */
-  margin-right: 6px;        /* a little spacing from the text */
-}
-      .emoji-caret {
-        display: inline-block;
-        width: 1px;
-        height: 1.1em;
-        background: var(--gold);
-        margin-left: 2px;
-        animation: caretBlink 1s steps(1) infinite;
-      }
-      @keyframes caretBlink {
-        50% {
-          opacity: 0;
-        }
+        color: var(--text);
+        margin-right: 6px;
       }
       .pin-icon,
       .pin-flag,
       .pinned-bar-icon i {
         color: var(--gold);
-        font-size: 1em; /* adjust size to match text */
+        font-size: 1em;
         vertical-align: middle;
       }
       .msg-status-icon {
         font-size: 0.75rem;
         vertical-align: middle;
-        color: var(--text-muted);    /* sent = gray */
+        color: var(--text-muted);
       }
       .msg-status-icon.read {
-        color: #4fc3f7;              /* read = blue (same as the original .tick.read) */
+        color: #4fc3f7;
       }
       .action-item i {
-  margin-right: 8px;
-  font-size: 1.1rem;
-  vertical-align: middle;
-}
+        margin-right: 8px;
+        font-size: 1.1rem;
+        vertical-align: middle;
+      }
     </style>
   </head>
   <body>
@@ -1560,10 +1555,16 @@
       <div class="composer" id="composerBar">
         <button class="btn-ghost btn-icon" id="mediaPickerBtn">
           <img
+            id="emojiPickerIcon"
             src="images/attachments/emoji.png"
             class="emojipicker"
             alt="emojipicker"
           />
+          <i
+            id="keyboardIcon"
+            class="bi bi-keyboard hidden"
+            style="font-size: 1.3rem"
+          ></i>
         </button>
         <button class="btn-ghost btn-icon" id="attachBtn">
           <img
@@ -1610,6 +1611,43 @@
           <div class="rec-lock">🔒<span>Slide up</span></div>
         </div>
       </div>
+
+      <!-- ============ Emoji / GIF Picker Panel (inline, WhatsApp-style) ============ -->
+      <div class="emoji-panel" id="mediaPicker">
+        <div class="picker-tabs">
+          <button class="picker-tab active" data-tab="emoji">😀 Emoji</button>
+          <button class="picker-tab" data-tab="gif">GIF</button>
+        </div>
+        <div class="picker-content" id="emojiContent">
+          <input
+            type="text"
+            class="picker-search"
+            id="emojiSearch"
+            placeholder="Search emoji…"
+          />
+          <div id="emojiRecentWrap">
+            <div class="picker-section-title">Frequently Used</div>
+            <div class="emoji-grid" id="emojiRecentGrid"></div>
+          </div>
+          <div class="picker-section-title">All Emoji</div>
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="picker-content hidden" id="gifContent">
+          <input
+            type="text"
+            id="gifSearch"
+            class="picker-search"
+            placeholder="Search GIFs"
+          />
+          <div class="picker-tabs" id="gifCatTabs">
+            <button class="picker-tab active" data-cat="trending">
+              Trending
+            </button>
+            <button class="picker-tab" data-cat="recent">Recently Used</button>
+          </div>
+          <div class="gif-grid" id="gifGrid"></div>
+        </div>
+      </div>
       <button class="new-msg-btn" id="newMsgBtn">↓</button>
     </div>
 
@@ -1646,48 +1684,6 @@
         <button class="btn btn-ghost btn-block" id="closeProfileBtn">
           Back
         </button>
-      </div>
-    </div>
-
-    <!-- ============ Media Picker Bottom Sheet ============ -->
-    <div class="sheet-scrim" id="mediaPickerScrim"></div>
-    <div class="bottom-sheet" id="mediaPicker">
-      <div class="sheet-handle"></div>
-      <div class="emoji-live-preview" id="emojiLivePreview">
-        <span id="emojiLivePreviewText"></span><span class="emoji-caret"></span>
-      </div>
-      <div class="picker-tabs">
-        <button class="picker-tab active" data-tab="emoji">😀 Emoji</button>
-        <button class="picker-tab" data-tab="gif">GIF</button>
-      </div>
-      <div class="picker-content" id="emojiContent">
-        <input
-          type="text"
-          class="picker-search"
-          id="emojiSearch"
-          placeholder="Search emoji…"
-        />
-        <div id="emojiRecentWrap">
-          <div class="picker-section-title">Frequently Used</div>
-          <div class="emoji-grid" id="emojiRecentGrid"></div>
-        </div>
-        <div class="picker-section-title">All Emoji</div>
-        <div class="emoji-grid" id="emojiGrid"></div>
-      </div>
-      <div class="picker-content hidden" id="gifContent">
-        <input
-          type="text"
-          id="gifSearch"
-          class="picker-search"
-          placeholder="Search GIFs"
-        />
-        <div class="picker-tabs" id="gifCatTabs">
-          <button class="picker-tab active" data-cat="trending">
-            Trending
-          </button>
-          <button class="picker-tab" data-cat="recent">Recently Used</button>
-        </div>
-        <div class="gif-grid" id="gifGrid"></div>
       </div>
     </div>
 
@@ -1761,43 +1757,47 @@
     <!-- ============ Message action sheet ============ -->
     <div class="sheet-scrim" id="actionScrim"></div>
     <div class="action-sheet" id="actionSheet">
-  <div class="sheet-handle"></div>
-  <div class="reaction-row" id="reactionRow"></div>
-  <button class="action-item" data-action="reply">
-    <i class="bi bi-reply"></i> Reply
-  </button>
-  <button class="action-item" data-action="copy">
-    <i class="bi bi-copy"></i> Copy
-  </button>
-  <button class="action-item" data-action="forward">
-    <i class="bi bi-reply-all"></i> Forward
-  </button>
-  <button class="action-item" data-action="pin">
-    <i class="bi bi-pin"></i> Pin
-  </button>
-  <button class="action-item" data-action="star">
-    <i class="bi bi-star"></i> Star
-  </button>
-  <button class="action-item" data-action="edit">
-    <i class="bi bi-pencil"></i> Edit
-  </button>
-  <button class="action-item" data-action="info">
-    <i class="bi bi-send-fill"></i> Message Info
-  </button>
-  <button class="action-item danger" data-action="deleteMe">
-    <i class="bi bi-trash"></i> Delete for Me
-  </button>
-  <button class="action-item danger" data-action="deleteEveryone">
-    <i class="bi bi-trash"></i> Delete for Everyone
-  </button>
-</div>
+      <div class="sheet-handle"></div>
+      <div class="reaction-row" id="reactionRow"></div>
+      <button class="action-item" data-action="reply">
+        <i class="bi bi-reply"></i> Reply
+      </button>
+      <button class="action-item" data-action="copy">
+        <i class="bi bi-copy"></i> Copy
+      </button>
+      <button class="action-item" data-action="forward">
+        <i class="bi bi-reply-all"></i> Forward
+      </button>
+      <button class="action-item" data-action="pin">
+        <i class="bi bi-pin"></i> Pin
+      </button>
+      <button class="action-item" data-action="star">
+        <i class="bi bi-star"></i> Star
+      </button>
+      <button class="action-item" data-action="edit">
+        <i class="bi bi-pencil"></i> Edit
+      </button>
+      <button class="action-item" data-action="info">
+        <i class="bi bi-send-fill"></i> Message Info
+      </button>
+      <button class="action-item danger" data-action="deleteMe">
+        <i class="bi bi-trash"></i> Delete for Me
+      </button>
+      <button class="action-item danger" data-action="deleteEveryone">
+        <i class="bi bi-trash"></i> Delete for Everyone
+      </button>
+    </div>
 
     <!-- ============ Chat overflow menu ============ -->
     <div class="sheet-scrim" id="chatMenuScrim"></div>
     <div class="action-sheet" id="chatMenuSheet">
       <div class="sheet-handle"></div>
-      <button class="action-item" data-menu="wallpaper"><i class="bi bi-card-image"></i> Wallpaper</button>
-<button class="action-item" data-menu="sharedMedia"><i class="bi bi-folder"></i> Shared Media</button>
+      <button class="action-item" data-menu="wallpaper">
+        <i class="bi bi-card-image"></i> Wallpaper
+      </button>
+      <button class="action-item" data-menu="sharedMedia">
+        <i class="bi bi-folder"></i> Shared Media
+      </button>
       <button class="action-item" data-menu="pinnedList">
         <i class="bi bi-pin"></i> Pinned Messages
       </button>
@@ -1884,21 +1884,53 @@
     </div>
 
     <!-- ============ Confirm Modal (premium) ============ -->
-<div class="modal-scrim" id="confirmModal">
-  <div class="modal-box" style="max-width:340px; text-align:center;">
-    <div class="modal-body" style="padding-top:28px;">
-      <div style="font-size:2.2rem; margin-bottom:10px; color:var(--danger);">
-        <i class="bi bi-exclamation-triangle"></i>
-      </div>
-      <h4 id="confirmTitle" style="margin:0 0 8px; color:var(--gold-soft); letter-spacing:.02em;">Delete Conversation</h4>
-      <p id="confirmMessage" style="color:var(--text-muted); font-size:.88rem; margin-bottom:20px;">This action cannot be undone.</p>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-outline btn-block" id="confirmCancelBtn">Cancel</button>
-        <button class="btn btn-block" id="confirmOkBtn" style="background:linear-gradient(135deg,var(--danger),#a83224); color:#fff;">Delete</button>
+    <div class="modal-scrim" id="confirmModal">
+      <div class="modal-box" style="max-width: 340px; text-align: center">
+        <div class="modal-body" style="padding-top: 28px">
+          <div
+            style="font-size: 2.2rem; margin-bottom: 10px; color: var(--danger)"
+          >
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h4
+            id="confirmTitle"
+            style="
+              margin: 0 0 8px;
+              color: var(--gold-soft);
+              letter-spacing: 0.02em;
+            "
+          >
+            Delete Conversation
+          </h4>
+          <p
+            id="confirmMessage"
+            style="
+              color: var(--text-muted);
+              font-size: 0.88rem;
+              margin-bottom: 20px;
+            "
+          >
+            This action cannot be undone.
+          </p>
+          <div style="display: flex; gap: 10px">
+            <button class="btn btn-outline btn-block" id="confirmCancelBtn">
+              Cancel
+            </button>
+            <button
+              class="btn btn-block"
+              id="confirmOkBtn"
+              style="
+                background: linear-gradient(135deg, var(--danger), #a83224);
+                color: #fff;
+              "
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+
     <!-- ============ Fullscreen media viewer ============ -->
     <div class="fullscreen-viewer" id="fullscreenViewer">
       <button class="fv-close" id="fvClose">✕</button>
@@ -1988,19 +2020,21 @@
       const pinnedChats = new Set(LS.get("mn_pinnedChats", []));
       const hiddenConvsMap = LS.get("mn_hiddenConvs", {});
 
-function isHiddenForMe(c) {
-  const hiddenAt = hiddenConvsMap[c.id];
-  if (!hiddenAt) return false;
-  const lastMs = c.lastMessageAt
-    ? (c.lastMessageAt.toMillis ? c.lastMessageAt.toMillis() : new Date(c.lastMessageAt).getTime())
-    : 0;
-  if (lastMs > hiddenAt) {
-    delete hiddenConvsMap[c.id];
-    LS.set("mn_hiddenConvs", hiddenConvsMap);
-    return false;
-  }
-  return true;
-}
+      function isHiddenForMe(c) {
+        const hiddenAt = hiddenConvsMap[c.id];
+        if (!hiddenAt) return false;
+        const lastMs = c.lastMessageAt
+          ? c.lastMessageAt.toMillis
+            ? c.lastMessageAt.toMillis()
+            : new Date(c.lastMessageAt).getTime()
+          : 0;
+        if (lastMs > hiddenAt) {
+          delete hiddenConvsMap[c.id];
+          LS.set("mn_hiddenConvs", hiddenConvsMap);
+          return false;
+        }
+        return true;
+      }
       const favoriteWallpapers = new Set(LS.get("mn_favWallpapers", []));
       const recentWallpapers = LS.get("mn_recentWallpapers", []);
       const recentEmojis = LS.get("mn_recentEmojis", []);
@@ -2056,31 +2090,41 @@ function isHiddenForMe(c) {
         setTimeout(() => el.remove(), 2600);
       }
 
-      function showConfirmModal({ title = "Are you sure?", message = "", confirmText = "Delete" } = {}) {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("confirmModal");
-    const okBtn = document.getElementById("confirmOkBtn");
-    const cancelBtn = document.getElementById("confirmCancelBtn");
-    document.getElementById("confirmTitle").textContent = title;
-    document.getElementById("confirmMessage").textContent = message;
-    okBtn.textContent = confirmText;
+      function showConfirmModal({
+        title = "Are you sure?",
+        message = "",
+        confirmText = "Delete",
+      } = {}) {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("confirmModal");
+          const okBtn = document.getElementById("confirmOkBtn");
+          const cancelBtn = document.getElementById("confirmCancelBtn");
+          document.getElementById("confirmTitle").textContent = title;
+          document.getElementById("confirmMessage").textContent = message;
+          okBtn.textContent = confirmText;
 
-    function cleanup(result) {
-      modal.classList.remove("open");
-      okBtn.removeEventListener("click", onOk);
-      cancelBtn.removeEventListener("click", onCancel);
-      resolve(result);
-    }
-    function onOk() { cleanup(true); }
-    function onCancel() { cleanup(false); }
-    okBtn.addEventListener("click", onOk);
-    cancelBtn.addEventListener("click", onCancel);
-    modal.classList.add("open");
-  });
-}
-document.getElementById("confirmModal").addEventListener("click", (e) => {
-  if (e.target.id === "confirmModal") document.getElementById("confirmCancelBtn").click();
-});
+          function cleanup(result) {
+            modal.classList.remove("open");
+            okBtn.removeEventListener("click", onOk);
+            cancelBtn.removeEventListener("click", onCancel);
+            resolve(result);
+          }
+          function onOk() {
+            cleanup(true);
+          }
+          function onCancel() {
+            cleanup(false);
+          }
+          okBtn.addEventListener("click", onOk);
+          cancelBtn.addEventListener("click", onCancel);
+          modal.classList.add("open");
+        });
+      }
+      document.getElementById("confirmModal").addEventListener("click", (e) => {
+        if (e.target.id === "confirmModal")
+          document.getElementById("confirmCancelBtn").click();
+      });
+
       // Ripple effect for all buttons
       document.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-icon, .btn, .picker-tab");
@@ -2381,13 +2425,13 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
 
       // ========== HELPERS ==========
       function otherParticipant(conv) {
-  const otherUid = conv.participants.find((p) => p !== user.uid);
-  const base = { uid: otherUid, ...conv.participantInfo[otherUid] };
-  const live = userDocCache.get(otherUid);
-  if (live?.photoURL) base.photoURL = live.photoURL;
-  if (live?.username) base.username = live.username;
-  return base;
-}
+        const otherUid = conv.participants.find((p) => p !== user.uid);
+        const base = { uid: otherUid, ...conv.participantInfo[otherUid] };
+        const live = userDocCache.get(otherUid);
+        if (live?.photoURL) base.photoURL = live.photoURL;
+        if (live?.username) base.username = live.username;
+        return base;
+      }
 
       function formatDate(date) {
         const today = new Date(),
@@ -2421,15 +2465,14 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
       document.querySelectorAll(".sheet-scrim").forEach((scrim) => {
         scrim.addEventListener("click", () => {
           scrim.classList.remove("open");
-          document
-            .querySelectorAll(".bottom-sheet.open, .action-sheet.open")
-            .forEach((s) => {
-              // Only close sheets tied to this scrim by proximity in DOM order — simplest: close all
-            });
           document.getElementById("mediaPicker").classList.remove("open");
           document.getElementById("wallpaperSheet").classList.remove("open");
           document.getElementById("actionSheet").classList.remove("open");
           document.getElementById("chatMenuSheet").classList.remove("open");
+          document
+            .getElementById("emojiPickerIcon")
+            ?.classList.remove("hidden");
+          document.getElementById("keyboardIcon")?.classList.add("hidden");
         });
       });
       document.querySelectorAll(".modal-scrim").forEach((scrim) => {
@@ -2527,12 +2570,14 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
       const presenceCache = new Map(); // otherUid -> raw lastActive value
       const userDocCache = new Map();
       function updateAvatarUI(otherUid, data) {
-  // Force full list refresh so all avatars use the live cache
-  renderConvList(document.getElementById("convSearch")?.value || "");
-  if (activeConvId && activeOtherUid === otherUid) {
-    document.getElementById("chatAvatar").src = avatarUrl({ uid: otherUid, photoURL: data?.photoURL });
-  }
-}
+        renderConvList(document.getElementById("convSearch")?.value || "");
+        if (activeConvId && activeOtherUid === otherUid) {
+          document.getElementById("chatAvatar").src = avatarUrl({
+            uid: otherUid,
+            photoURL: data?.photoURL,
+          });
+        }
+      }
       function updatePresenceUI(otherUid, lastActiveRaw) {
         const online = isOnline(lastActiveRaw);
         document
@@ -2574,16 +2619,15 @@ document.getElementById("confirmModal").addEventListener("click", (e) => {
           const userRef = doc(db, "users", otherUid);
           onSnapshot(userRef, (snap) => {
             if (!snap.exists()) return;
-const data = snap.data();
-presenceCache.set(otherUid, data.lastActive);
-userDocCache.set(otherUid, data);
-updatePresenceUI(otherUid, data.lastActive);
-updateAvatarUI(otherUid, data);
+            const data = snap.data();
+            presenceCache.set(otherUid, data.lastActive);
+            userDocCache.set(otherUid, data);
+            updatePresenceUI(otherUid, data.lastActive);
+            updateAvatarUI(otherUid, data);
           });
         });
       }
 
-      // Re‑evaluate every 5s so status flips automatically
       setInterval(() => {
         presenceCache.forEach((lastActiveRaw, otherUid) =>
           updatePresenceUI(otherUid, lastActiveRaw),
@@ -2617,7 +2661,8 @@ updateAvatarUI(otherUid, data);
         chatPage.classList.add("hidden");
         profilePage.classList.add("hidden");
         document.getElementById("mediaPicker").classList.remove("open");
-        document.getElementById("mediaPickerScrim").classList.remove("open");
+        document.getElementById("emojiPickerIcon")?.classList.remove("hidden");
+        document.getElementById("keyboardIcon")?.classList.add("hidden");
         renderConvList(document.getElementById("convSearch").value);
       }
       function showChatPage() {
@@ -2642,7 +2687,10 @@ updateAvatarUI(otherUid, data);
         const state = e.state;
         if (!state || state.page !== "chat") {
           document.getElementById("mediaPicker").classList.remove("open");
-          document.getElementById("mediaPickerScrim").classList.remove("open");
+          document
+            .getElementById("emojiPickerIcon")
+            ?.classList.remove("hidden");
+          document.getElementById("keyboardIcon")?.classList.add("hidden");
           showList();
           if (!state) history.replaceState({ page: "list" }, "");
         }
@@ -2678,11 +2726,10 @@ updateAvatarUI(otherUid, data);
         localStorage.setItem("maison_lastChat", convId);
         document.getElementById("chatName").textContent = otherName;
         document.getElementById("chatAvatar").src = avatarUrl({
-  uid: otherUid,
-  photoURL: userDocCache.get(otherUid)?.photoURL,
-});
+          uid: otherUid,
+          photoURL: userDocCache.get(otherUid)?.photoURL,
+        });
         document.getElementById("chatStatusText").classList.remove("typing");
-        // Apply cached presence immediately so the header never shows blank/stale
         if (presenceCache.has(otherUid)) {
           updatePresenceUI(otherUid, presenceCache.get(otherUid));
         } else {
@@ -2690,11 +2737,11 @@ updateAvatarUI(otherUid, data);
         }
         showChatPage();
         const chatState = { chat: true, page: "chat", convId };
-if (history.state && history.state.page === "chat") {
-  history.replaceState(chatState, "");   // switching chats: don't stack entries
-} else {
-  history.pushState(chatState, "");      // entering chat from list: stack once
-}
+        if (history.state && history.state.page === "chat") {
+          history.replaceState(chatState, "");
+        } else {
+          history.pushState(chatState, "");
+        }
 
         const convRef = doc(db, "conversations", convId);
         const convSnap = await getDoc(convRef);
@@ -2712,8 +2759,8 @@ if (history.state && history.state.page === "chat") {
           orderBy("createdAt", "desc"),
           limit(30),
         );
-          let firstSnapshot = true;
-          unsubMessages = onSnapshot(q, async (snap) => {
+        let firstSnapshot = true;
+        unsubMessages = onSnapshot(q, async (snap) => {
           const hidden = getHiddenIds(convId);
           let incomingFromOther = false;
           snap.docChanges().forEach((chg) => {
@@ -2730,9 +2777,6 @@ if (history.state && history.state.page === "chat") {
             }
             messagesMap.set(d.id, d);
           });
-          // Only set the pagination cursor on the FIRST snapshot of this
-          // conversation. Realtime updates (reactions/read receipts/edits)
-          // must never touch it — that was the cause of the looping bug.
           if (firstSnapshot) {
             firstSnapshot = false;
             if (snap.empty) allMessagesLoaded = true;
@@ -2782,12 +2826,6 @@ if (history.state && history.state.page === "chat") {
         });
       }
 
-      // ========== READ RECEIPTS (fixes double-tick never appearing) ==========
-      // markConversationRead() only clears the unread counter on the conversation
-      // doc — it does not touch each message's own readBy array, which is what
-      // the tick rendering actually checks (m.readBy?.length > 1). This writes
-      // the viewer's uid onto every unread incoming message so the sender's
-      // client sees it flip from ✓ to ✓✓ in real time.
       async function markMessagesReadByMe(convId, msgs) {
         const toMark = msgs.filter(
           (m) =>
@@ -2802,9 +2840,7 @@ if (history.state && history.state.page === "chat") {
             });
           });
           await batch.commit();
-        } catch {
-          // non-fatal — worst case the tick just stays single until next read
-        }
+        } catch {}
       }
 
       // ========== MESSAGES RENDERING ==========
@@ -2861,19 +2897,15 @@ if (history.state && history.state.page === "chat") {
             : "";
           let tickIcon = "";
           if (mine) {
-            // read by more than just the sender → double check (blue)
             if (m.readBy?.length > 1) {
               tickIcon = `<i class="bi bi-check2-all msg-status-icon read"></i>`;
             } else {
-              // sent but not read → single check (gray)
               tickIcon = `<i class="bi bi-check2 msg-status-icon"></i>`;
             }
           }
           const statusTicks = tickIcon;
           const metaInner = `${pinFlag}${starFlag}${editedTag}<span>${time}</span>${statusTicks}`;
 
-          // Text/deleted bubbles: meta floats INSIDE the text (WhatsApp-style)
-          // Media/file/audio bubbles: unchanged block row below the content
           const isTextLike = m.deleted || m.type === "text" || !m.type;
           const inlineMetaHtml = isTextLike
             ? `<span class="msg-text-inline-meta">${metaInner}</span>`
@@ -2971,7 +3003,7 @@ if (history.state && history.state.page === "chat") {
       });
 
       // ========== LAZY LOAD OLDER ==========
-           const maybeLoadOlder = debounce(async () => {
+      const maybeLoadOlder = debounce(async () => {
         if (chatBody.scrollTop === 0 && !allMessagesLoaded && lastVisible) {
           const prevHeight = chatBody.scrollHeight;
           const convIdAtStart = activeConvId;
@@ -2982,7 +3014,7 @@ if (history.state && history.state.page === "chat") {
             limit(30),
           );
           const snap = await getDocs(q);
-          if (activeConvId !== convIdAtStart) return; // switched chats mid-fetch
+          if (activeConvId !== convIdAtStart) return;
           if (snap.empty) {
             allMessagesLoaded = true;
           } else {
@@ -3007,19 +3039,12 @@ if (history.state && history.state.page === "chat") {
       const msgInput = document.getElementById("messageInput");
       const sendBtnEl = document.getElementById("sendBtn");
       const voiceBtn = document.getElementById("voiceBtn");
-      function syncEmojiPreview() {
-        const el = document.getElementById("emojiLivePreviewText");
-        if (el) el.textContent = msgInput.value;
-      }
-
       msgInput.addEventListener("input", () => {
-        syncEmojiPreview();
         msgInput.style.height = "auto";
         msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + "px";
         const hasText = msgInput.value.trim().length > 0;
         voiceBtn.classList.toggle("hidden", hasText);
         sendBtnEl.classList.toggle("hidden", !hasText);
-        // Typing indicator — fixed: this was previously imported but never called
         if (activeConvId) {
           setTyping(activeConvId, true);
           clearTimeout(typingTimeout);
@@ -3078,7 +3103,6 @@ if (history.state && history.state.page === "chat") {
           const msg = currentMessages.find((m) => m.id === msgId);
           if (!msg) return;
 
-          // reply-quote jump/click
           row.querySelectorAll(".reply-quote").forEach((rq) => {
             rq.addEventListener("click", () => {
               const target = rq.dataset.jump;
@@ -3099,14 +3123,12 @@ if (history.state && history.state.page === "chat") {
             });
           });
 
-          // media click -> fullscreen viewer
           row
             .querySelectorAll("img[data-msg], video[data-msg]")
             .forEach((el) => {
               el.addEventListener("click", () => openFullscreenViewer(msgId));
             });
 
-          // swipe right -> reply
           let touchStartX = 0,
             touchStartY = 0,
             swiping = false;
@@ -3139,7 +3161,6 @@ if (history.state && history.state.page === "chat") {
             if (dx > 60) startReply(msg.id, msg.text);
           });
 
-          // double tap -> heart reaction
           let lastTap = 0;
           row.addEventListener("click", (e) => {
             if (e.target.closest("a, img, video, audio")) return;
@@ -3150,7 +3171,6 @@ if (history.state && history.state.page === "chat") {
             lastTap = now;
           });
 
-          // long press -> action sheet
           let pressTimer;
           const start = () => {
             pressTimer = setTimeout(() => openActionSheet(msgId), 480);
@@ -3181,49 +3201,49 @@ if (history.state && history.state.page === "chat") {
 
       // ========== ACTION SHEET (message actions) ==========
       function openActionSheet(msgId) {
-  actionMenuMsgId = msgId;
-  const msg = currentMessages.find((m) => m.id === msgId);
-  if (!msg) return;
-  const mine = msg.senderId === user.uid;
-  const isPinned = getPinnedMsgIds(activeConvId).has(msgId);
-  const isStarred = getStarredMsgIds(activeConvId).has(msgId);
+        actionMenuMsgId = msgId;
+        const msg = currentMessages.find((m) => m.id === msgId);
+        if (!msg) return;
+        const mine = msg.senderId === user.uid;
+        const isPinned = getPinnedMsgIds(activeConvId).has(msgId);
+        const isStarred = getStarredMsgIds(activeConvId).has(msgId);
 
-  document
-    .querySelectorAll("#actionSheet .action-item")
-    .forEach((btn) => {
-      const action = btn.dataset.action;
-      if (action === "edit")
-        btn.classList.toggle("hidden", !mine || msg.type !== "text");
-      if (action === "deleteEveryone")
-        btn.classList.toggle("hidden", !mine);
-      if (action === "pin")
-        btn.innerHTML = isPinned
-          ? '<i class="bi bi-pin"></i> Unpin'
-          : '<i class="bi bi-pin"></i> Pin';
-      if (action === "star")
-        btn.innerHTML = isStarred
-          ? '<i class="bi bi-star"></i> Unstar'
-          : '<i class="bi bi-star"></i> Star';
-    });   // <--- this closing was missing
+        document
+          .querySelectorAll("#actionSheet .action-item")
+          .forEach((btn) => {
+            const action = btn.dataset.action;
+            if (action === "edit")
+              btn.classList.toggle("hidden", !mine || msg.type !== "text");
+            if (action === "deleteEveryone")
+              btn.classList.toggle("hidden", !mine);
+            if (action === "pin")
+              btn.innerHTML = isPinned
+                ? '<i class="bi bi-pin"></i> Unpin'
+                : '<i class="bi bi-pin"></i> Pin';
+            if (action === "star")
+              btn.innerHTML = isStarred
+                ? '<i class="bi bi-star"></i> Unstar'
+                : '<i class="bi bi-star"></i> Star';
+          });
 
-  const row = document.getElementById("reactionRow");
-  row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
-    .map((e) => `<span data-emoji="${e}">${e}</span>`)
-    .join("");
-  row.querySelectorAll("span").forEach((s) => {
-    s.onclick = async () => {
-      await updateDoc(
-        doc(db, "conversations", activeConvId, "messages", msgId),
-        {
-          [`reactions.${s.dataset.emoji}`]: increment(1),
-        },
-      );
-      closeSheet("actionScrim", "actionSheet");
-    };
-  });
+        const row = document.getElementById("reactionRow");
+        row.innerHTML = ["❤️", "😂", "😮", "😢", "🙏", "👍"]
+          .map((e) => `<span data-emoji="${e}">${e}</span>`)
+          .join("");
+        row.querySelectorAll("span").forEach((s) => {
+          s.onclick = async () => {
+            await updateDoc(
+              doc(db, "conversations", activeConvId, "messages", msgId),
+              {
+                [`reactions.${s.dataset.emoji}`]: increment(1),
+              },
+            );
+            closeSheet("actionScrim", "actionSheet");
+          };
+        });
 
-  openSheet("actionScrim", "actionSheet");
-}
+        openSheet("actionScrim", "actionSheet");
+      }
       document
         .getElementById("actionScrim")
         .addEventListener("click", () =>
@@ -3270,18 +3290,19 @@ if (history.state && history.state.page === "chat") {
             renderMessages();
             showToast("Deleted for you");
           } else if (action === "deleteEveryone") {
-  const ok = await showConfirmModal({
-    title: "Delete for Everyone",
-    message: "This message will be removed for everyone in this chat.",
-    confirmText: "Delete",
-  });
-  if (ok) {
-    await updateDoc(
-      doc(db, "conversations", activeConvId, "messages", msgId),
-      { deleted: true, text: "" },
-    );
-  }
-}
+            const ok = await showConfirmModal({
+              title: "Delete for Everyone",
+              message:
+                "This message will be removed for everyone in this chat.",
+              confirmText: "Delete",
+            });
+            if (ok) {
+              await updateDoc(
+                doc(db, "conversations", activeConvId, "messages", msgId),
+                { deleted: true, text: "" },
+              );
+            }
+          }
         });
       });
 
@@ -3519,43 +3540,47 @@ if (history.state && history.state.page === "chat") {
         );
 
       async function deleteActiveConversation() {
-  const ok = await showConfirmModal({
-    title: "Delete Conversation",
-    message: "Chat history will be cleared. Wallpaper stays saved.",
-    confirmText: "Delete",
-  });
-  if (!ok) return;
+        const ok = await showConfirmModal({
+          title: "Delete Conversation",
+          message: "Chat history will be cleared. Wallpaper stays saved.",
+          confirmText: "Delete",
+        });
+        if (!ok) return;
 
-  const messagesRef = collection(db, "conversations", activeConvId, "messages");
-  const snapshot = await getDocs(messagesRef);
-  const batch = writeBatch(db);
-  snapshot.forEach((d) => batch.delete(d.ref));
-  await batch.commit();
+        const messagesRef = collection(
+          db,
+          "conversations",
+          activeConvId,
+          "messages",
+        );
+        const snapshot = await getDocs(messagesRef);
+        const batch = writeBatch(db);
+        snapshot.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
 
-  // Reset preview fields only – NEVER touch wallpaper
-  await updateDoc(doc(db, "conversations", activeConvId), {
-    lastMessage: "",
-    lastMessageAt: null,
-    lastSenderId: null,
-    lastRead: true,
-    [`unread.${user.uid}`]: 0,
-  });
+        await updateDoc(doc(db, "conversations", activeConvId), {
+          lastMessage: "",
+          lastMessageAt: null,
+          lastSenderId: null,
+          lastRead: true,
+          [`unread.${user.uid}`]: 0,
+        });
 
-  // Clean local caches for that conversation
-  localStorage.removeItem(pinnedKey(activeConvId));
-  localStorage.removeItem(starredKey(activeConvId));
-  localStorage.removeItem(hiddenIdsKey(activeConvId));
+        localStorage.removeItem(pinnedKey(activeConvId));
+        localStorage.removeItem(starredKey(activeConvId));
+        localStorage.removeItem(hiddenIdsKey(activeConvId));
 
-  // Hide from my list until a new message arrives
-  hiddenConvsMap[activeConvId] = Date.now();
-  LS.set("mn_hiddenConvs", hiddenConvsMap);
+        hiddenConvsMap[activeConvId] = Date.now();
+        LS.set("mn_hiddenConvs", hiddenConvsMap);
 
-  showList();
-  history.back();
-}
+        showList();
+        history.back();
+      }
 
       // ========== FULLSCREEN MEDIA VIEWER ==========
       function openFullscreenViewer(msgId) {
+        document.getElementById("fvPrev").style.display = "";
+        document.getElementById("fvNext").style.display = "";
         fvMediaList = currentMessages.filter(
           (m) => ["image", "video"].includes(m.type) && !m.deleted,
         );
@@ -3564,6 +3589,21 @@ if (history.state && history.state.page === "chat") {
         renderFvContent();
         document.getElementById("fullscreenViewer").classList.add("open");
       }
+
+      // View a single avatar/profile photo big — no prev/next nav needed
+      function openSingleImageViewer(url) {
+        if (!url) return;
+        fvMediaList = [{ type: "image", fileUrl: url }];
+        fvIndex = 0;
+        document.getElementById("fvPrev").style.display = "none";
+        document.getElementById("fvNext").style.display = "none";
+        renderFvContent();
+        document.getElementById("fullscreenViewer").classList.add("open");
+      }
+      document.getElementById("chatAvatar").addEventListener("click", () => {
+        openSingleImageViewer(document.getElementById("chatAvatar").src);
+      });
+
       function renderFvContent() {
         const m = fvMediaList[fvIndex];
         const content = document.getElementById("fvContent");
@@ -3623,7 +3663,6 @@ if (history.state && history.state.page === "chat") {
             img.style.transform = "";
           }
         });
-        // swipe to change image when not zoomed
         let sx = 0;
         img.addEventListener("touchstart", (e) => {
           if (e.touches.length === 1) sx = e.touches[0].clientX;
@@ -3779,27 +3818,35 @@ if (history.state && history.state.page === "chat") {
       voiceBtn.addEventListener("touchend", () => {
         if (!recLocked) stopRecording(false);
       });
-      // desktop fallback
       voiceBtn.addEventListener("mousedown", startRecording);
       voiceBtn.addEventListener("mouseup", () => stopRecording(false));
 
-      // ========== MEDIA PICKER (Emoji + GIF) ==========
+      // ========== MEDIA PICKER (Emoji + GIF) – inline panel ==========
       const mediaPicker = document.getElementById("mediaPicker");
+      function openEmojiPanel() {
+        mediaPicker.classList.add("open");
+        document.getElementById("emojiPickerIcon").classList.add("hidden");
+        document.getElementById("keyboardIcon").classList.remove("hidden");
+        msgInput.blur();
+        renderEmojiGrid();
+        renderRecentEmojis();
+        if (GIPHY_API_KEY && GIPHY_API_KEY !== "YOUR_GIPHY_API_KEY")
+          fetchTrendingGifs();
+      }
+      function closeEmojiPanel() {
+        mediaPicker.classList.remove("open");
+        document.getElementById("emojiPickerIcon").classList.remove("hidden");
+        document.getElementById("keyboardIcon").classList.add("hidden");
+      }
       document
         .getElementById("mediaPickerBtn")
         .addEventListener("click", () => {
-          const isOpen = mediaPicker.classList.contains("open");
-          if (isOpen) {
-            closeSheet("mediaPickerScrim", "mediaPicker");
-          } else {
-            openSheet("mediaPickerScrim", "mediaPicker");
-            renderEmojiGrid();
-            syncEmojiPreview();
-            renderRecentEmojis();
-            if (GIPHY_API_KEY && GIPHY_API_KEY !== "YOUR_GIPHY_API_KEY")
-              fetchTrendingGifs();
-          }
+          if (mediaPicker.classList.contains("open")) closeEmojiPanel();
+          else openEmojiPanel();
         });
+      msgInput.addEventListener("focus", () => {
+        if (mediaPicker.classList.contains("open")) closeEmojiPanel();
+      });
 
       document
         .querySelectorAll("#mediaPicker .picker-tabs > .picker-tab")
@@ -3828,17 +3875,13 @@ if (history.state && history.state.page === "chat") {
         const newPos = start + emoji.length;
         msgInput.setSelectionRange(newPos, newPos);
         msgInput.dispatchEvent(new Event("input"));
-        syncEmojiPreview();
-        requestAnimationFrame(() => {
-          msgInput.scrollTop = msgInput.scrollHeight;
-        });
         recentEmojis.unshift(emoji);
         LS.set("mn_recentEmojis", [...new Set(recentEmojis)].slice(0, 24));
         renderRecentEmojis();
       }
       function renderEmojiGrid(filter = "") {
         const grid = document.getElementById("emojiGrid");
-        const list = filter ? ALL_EMOJIS : ALL_EMOJIS; // emoji filtering by name isn't available without a name map; show all, search box still usable for future name-based filtering
+        const list = filter ? ALL_EMOJIS : ALL_EMOJIS;
         grid.innerHTML = "";
         list.forEach((emoji) => {
           const span = document.createElement("span");
@@ -3898,7 +3941,7 @@ if (history.state && history.state.page === "chat") {
             });
             recentGifs.unshift(url);
             LS.set("mn_recentGifs", [...new Set(recentGifs)].slice(0, 24));
-            closeSheet("mediaPickerScrim", "mediaPicker");
+            closeEmojiPanel();
           }),
         );
       }
@@ -3923,7 +3966,7 @@ if (history.state && history.state.page === "chat") {
                   fileUrl: img.dataset.url,
                   fileName: "gif",
                 });
-                closeSheet("mediaPickerScrim", "mediaPicker");
+                closeEmojiPanel();
               }),
             );
           } else {
@@ -4133,7 +4176,7 @@ if (history.state && history.state.page === "chat") {
         .addEventListener("click", () =>
           document.getElementById("profileAvatarFile").click(),
         );
-            function resizeImageToDataUrl(file, maxDim = 300, quality = 0.82) {
+      function resizeImageToDataUrl(file, maxDim = 300, quality = 0.82) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {
@@ -4174,65 +4217,64 @@ if (history.state && history.state.page === "chat") {
             showToast("Couldn't process that image");
           }
         });
-        
-      document.getElementById("saveProfileBtn").addEventListener("click", async () => {
-        const newUsername = document.getElementById("profileUsername").value.trim();
-        const newPhoto = window.tempAvatar;
-        const updates = {};
-        if (newUsername && newUsername !== profile.username) updates.username = newUsername;
-        if (newPhoto) updates.photoURL = newPhoto;
 
-  if (Object.keys(updates).length > 0) {
-    try {
-      await updateDoc(doc(db, "users", user.uid), updates);
-    } catch (err) {
-      console.error("Profile save failed:", err);
-      showToast("Save failed — image may be too large");
-      return;
-    }
-    if (updates.username) profile.username = updates.username;
-    if (updates.photoURL) {
-      profile.photoURL = updates.photoURL;
-      window.tempAvatar = null;
-    }
-  }
+      document
+        .getElementById("saveProfileBtn")
+        .addEventListener("click", async () => {
+          const newUsername = document
+            .getElementById("profileUsername")
+            .value.trim();
+          const newPhoto = window.tempAvatar;
+          const updates = {};
+          if (newUsername && newUsername !== profile.username)
+            updates.username = newUsername;
+          if (newPhoto) updates.photoURL = newPhoto;
 
-  // ---- 2. Update participantInfo in every conversation you’re in ----
+          if (Object.keys(updates).length > 0) {
+            try {
+              await updateDoc(doc(db, "users", user.uid), updates);
+            } catch (err) {
+              console.error("Profile save failed:", err);
+              showToast("Save failed — image may be too large");
+              return;
+            }
+            if (updates.username) profile.username = updates.username;
+            if (updates.photoURL) {
+              profile.photoURL = updates.photoURL;
+              window.tempAvatar = null;
+            }
+          }
 
-  try {
-    const q = query(
-      collection(db, "conversations"),
-      where("participants", "array-contains", user.uid)
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const batch = writeBatch(db);
-      snap.forEach((convDoc) => {
-        const ref = doc(db, "conversations", convDoc.id);
-        const data = {};
+          try {
+            const q = query(
+              collection(db, "conversations"),
+              where("participants", "array-contains", user.uid),
+            );
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              const batch = writeBatch(db);
+              snap.forEach((convDoc) => {
+                const ref = doc(db, "conversations", convDoc.id);
+                const data = {};
+                if (newUsername) {
+                  data[`participantInfo.${user.uid}.username`] = newUsername;
+                }
+                if (newPhoto) {
+                  data[`participantInfo.${user.uid}.photoURL`] = newPhoto;
+                }
+                if (Object.keys(data).length > 0) {
+                  batch.update(ref, data);
+                }
+              });
+              await batch.commit();
+            }
+          } catch (err) {
+            console.error("Failed to sync profile to conversations:", err);
+          }
 
-        if (newUsername) {
-          data[`participantInfo.${user.uid}.username`] = newUsername;
-        }
-        if (newPhoto) {
-          data[`participantInfo.${user.uid}.photoURL`] = newPhoto;
-        }
-
-        if (Object.keys(data).length > 0) {
-          batch.update(ref, data);
-        }
-      });
-      await batch.commit();
-    }
-  } catch (err) {
-    console.error("Failed to sync profile to conversations:", err);
-    // still show toast – the avatar might not update for others instantly but
-    // the user doc is correct, so it’s not fatal.
-  }
-
-  showToast("Profile saved");
-  showList();
-});
+          showToast("Profile saved");
+          showList();
+        });
 
       // ========== LOGOUT ==========
       document
@@ -4242,7 +4284,7 @@ if (history.state && history.state.page === "chat") {
           location.href = "index.html";
         });
 
-      // ========== NEW CHAT (full VIP member picker — fixed: previously always opened members[0]) ==========
+      // ========== NEW CHAT ==========
       document
         .getElementById("newChatBtn")
         .addEventListener("click", async () => {
@@ -4277,7 +4319,7 @@ if (history.state && history.state.page === "chat") {
         .addEventListener("click", () =>
           document.getElementById("newChatModal").classList.remove("open"),
         );
-            // Initial load
+
       history.pushState({ page: "list" }, "");
       renderSkeleton();
     </script>
